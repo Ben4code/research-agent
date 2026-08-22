@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { buttonVariants } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { cn } from '@/lib/utils';
@@ -159,9 +161,9 @@ export default async function ResearchDetailPage({
                   Report
                 </h2>
                 <article className="prose prose-zinc dark:prose-invert max-w-none rounded-lg border border-border bg-card p-6">
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {latestReport.content}
-                  </pre>
+                  </ReactMarkdown>
                 </article>
               </div>
             ) : (
@@ -169,7 +171,9 @@ export default async function ResearchDetailPage({
                 <p className="text-muted-foreground">
                   {research.status === 'failed'
                     ? 'Research failed before a report could be generated.'
-                    : 'Report will appear here once research completes.'}
+                    : research.status === 'completed'
+                      ? 'Research completed but no report was generated.'
+                      : 'Report will appear here once research completes.'}
                 </p>
               </div>
             )}

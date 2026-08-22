@@ -2,13 +2,13 @@ import { proxyActivities, setHandler } from '@temporalio/workflow';
 import type * as activities from '../activities/research.activities.js';
 import { clarifySignal, type ResearchWorkflowInput } from './types.js';
 
-const { initializeResearch, performResearch, completeResearch } =
+const { initializeResearch, createResearchPlan, completeResearch } =
   proxyActivities<typeof activities>({
-    startToCloseTimeout: '30s',
+    startToCloseTimeout: '60s',
     retry: {
       initialInterval: '1s',
       backoffCoefficient: 2,
-      maximumInterval: '10s',
+      maximumInterval: '30s',
       maximumAttempts: 3,
     },
   });
@@ -22,6 +22,7 @@ export async function researchWorkflow(
   });
 
   await initializeResearch(input);
-  await performResearch(input);
-  await completeResearch(input);
+  const plan = await createResearchPlan(input);
+  console.log(`Research plan: ${plan.topic} (${plan.steps.length} steps)`);
+  await completeResearch(input, plan);
 }

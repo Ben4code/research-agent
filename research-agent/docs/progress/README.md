@@ -19,8 +19,8 @@ Track the status of each phase from `docs/Plan.md`.
 | 2     | Domain Model               | ✅ Complete | M1 — Infrastructure   | [phase-02.md](./phase-02-domain-model.md)         |
 | 3     | NestJS API                 | ✅ Complete  | M1 — Infrastructure   | [phase-03.md](./phase-03-nestjs-api.md)           |
 | 4     | Temporal Integration       | ✅ Complete  | M1 — Infrastructure   | [phase-04.md](./phase-04-temporal-integration.md) |
-| 5     | Mastra Agent               | ⬜          | M2 — Basic Agent      | [phase-05.md](./phase-05-mastra-agent.md)         |
-| 6     | Research Tools             | ⬜          | M3 — Real Research    | [phase-06.md](./phase-06-research-tools.md)       |
+| 5     | Mastra Agent               | ✅ Complete  | M2 — Basic Agent      | [phase-05.md](./phase-05-mastra-agent.md)         |
+| 6     | Research Tools             | ✅ Complete  | M3 — Real Research    | [phase-06.md](./phase-06-research-tools.md)       |
 | 7     | First E2E Workflow         | ⬜          | M3 — Real Research    | [phase-07.md](./phase-07-first-e2e-workflow.md)   |
 | 8     | Research Gap Detection     | ⬜          | M3 — Real Research    | [phase-08.md](./phase-08-gap-detection.md)        |
 | 9     | Progress Events            | ⬜          | M4 — Frontend         | [phase-09.md](./phase-09-progress-events.md)      |

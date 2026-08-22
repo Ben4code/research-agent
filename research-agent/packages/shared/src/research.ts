@@ -14,22 +14,9 @@ export interface FetchPageResponse {
   content: string;
 }
 
-export interface Finding {
-  topic: string;
-  claim: string;
-  sourceUrl: string;
-  sourceTitle: string;
-  confidence: 'high' | 'medium' | 'low';
-}
-
 export interface ResearchGap {
   topic: string;
   description: string;
-}
-
-export interface ResearchPlan {
-  topic: string;
-  steps: string[];
 }
 
 export interface ResearchReport {
