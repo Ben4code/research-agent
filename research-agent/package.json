@@ -1,0 +1,44 @@
+{
+  "name": "research-agent",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AI-powered research platform with durable workflow execution",
+  "packageManager": "pnpm@10.13.1",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build:shared": "pnpm --filter @research-agent/shared build",
+    "dev": "pnpm build:shared && pnpm -r --parallel run dev",
+    "dev:web": "pnpm --filter @research-agent/web dev",
+    "dev:api": "pnpm build:shared && pnpm --filter @research-agent/api start:dev",
+    "dev:worker": "pnpm --filter @research-agent/worker dev",
+    "build": "pnpm build:shared && pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "db:up": "docker compose up -d postgres temporal temporal-ui",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @research-agent/api prisma migrate dev",
+    "db:seed": "pnpm --filter @research-agent/api db:seed",
+    "db:studio": "pnpm --filter @research-agent/api prisma studio",
+    "clean": "pnpm -r exec rm -rf dist .next node_modules && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "protobufjs",
+      "unrs-resolver",
+      "@swc/core"
+    ]
+  }
+}
