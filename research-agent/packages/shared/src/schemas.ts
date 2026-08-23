@@ -75,6 +75,7 @@ export const researchPlanSchema = z.object({
 export const findingSchema = z.object({
   topic: z.string(),
   claim: z.string(),
+  evidence: z.string().optional().describe('Supporting evidence for the claim'),
   sourceUrl: z.string(),
   sourceTitle: z.string(),
   confidence: z.enum(['high', 'medium', 'low']),
@@ -88,6 +89,18 @@ export type ResearchStep = z.infer<typeof researchStepSchema>;
 export type ResearchPlan = z.infer<typeof researchPlanSchema>;
 export type Finding = z.infer<typeof findingSchema>;
 export type Findings = z.infer<typeof findingsSchema>;
+
+// ── Report generation schema ────────────────────────────────────────
+
+export const generatedReportSchema = z.object({
+  title: z.string().describe('Report title'),
+  executiveSummary: z.string().describe('Brief summary of key findings'),
+  content: z
+    .string()
+    .describe('Full report body in Markdown format with sections, tables, and analysis'),
+});
+
+export type GeneratedReport = z.infer<typeof generatedReportSchema>;
 
 // ── Tool schemas (used by Mastra tools + Temporal activities) ───────
 

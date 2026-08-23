@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 200" width="820" height="200">
+  <defs>
+    <filter id="circuit-glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="node-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="plate-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#454a4e"/>
+      <stop offset="100%" stop-color="#33373a"/>
+    </linearGradient>
+    <linearGradient id="plate-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a4f54"/>
+      <stop offset="100%" stop-color="#3c4044"/>
+    </linearGradient>
+    <linearGradient id="plate-light" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#565b60"/>
+      <stop offset="100%" stop-color="#44494d"/>
+    </linearGradient>
+    <linearGradient id="plate-darkest" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a3e42"/>
+      <stop offset="100%" stop-color="#2a2d30"/>
+    </linearGradient>
+    <linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3c4044"/>
+      <stop offset="100%" stop-color="#2e3134"/>
+    </linearGradient>
+    <linearGradient id="neural-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FD7B41"/>
+      <stop offset="60%" stop-color="#EDBF9B"/>
+      <stop offset="100%" stop-color="#f0a060"/>
+    </linearGradient>
+    <linearGradient id="neural-peach" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EDBF9B"/>
+      <stop offset="100%" stop-color="#e8a870"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Brain icon scaled to fit left side -->
+  <g transform="translate(-20, -12) scale(0.42)">
+    <!-- Brain silhouette -->
+    <path d="M 215 420 C 205 400, 200 385, 195 370 C 185 360, 170 345, 155 325 C 130 300, 105 265, 95 235 C 80 195, 90 155, 115 125 C 135 100, 165 82, 200 75 C 230 68, 260 70, 290 78 C 320 85, 345 100, 365 120 C 390 145, 405 175, 415 210 C 425 245, 420 275, 405 305 C 395 325, 375 340, 355 350 C 340 360, 330 355, 320 345 C 310 335, 305 345, 300 360 C 295 380, 280 395, 270 420 Z" fill="#2e3236"/>
+
+    <!-- Plates -->
+    <path d="M 140 140 C 155 105, 185 82, 220 75 L 245 80 L 220 130 L 175 155 Z" fill="url(#plate-light)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 245 80 C 270 72, 295 78, 320 90 L 330 115 L 285 145 L 220 130 Z" fill="url(#plate-mid)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 320 90 C 350 105, 375 130, 395 165 L 390 200 L 345 185 L 330 115 Z" fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 390 200 C 405 230, 415 255, 415 275 L 400 305 L 360 280 L 345 230 L 345 185 Z" fill="url(#plate-darkest)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 400 305 C 390 325, 370 340, 355 350 L 330 345 L 340 310 L 360 280 Z" fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 220 130 L 285 145 L 330 115 L 345 185 L 345 230 L 300 260 L 250 240 L 210 200 L 175 155 Z" fill="url(#plate-mid)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 140 140 L 175 155 L 210 200 L 195 245 L 155 265 L 115 235 C 100 200, 105 165, 115 145 Z" fill="url(#plate-light)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 115 235 L 155 265 L 160 295 L 140 310 C 120 295, 105 270, 100 250 Z" fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 140 310 L 160 295 L 195 310 L 200 330 L 175 340 C 160 335, 148 325, 140 310 Z" fill="url(#plate-darkest)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 175 340 L 200 330 L 230 335 L 220 355 L 195 365 C 185 360, 178 350, 175 340 Z" fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 195 245 L 250 240 L 300 260 L 290 305 L 250 320 L 230 335 L 200 330 L 195 310 L 160 295 L 155 265 Z" fill="url(#plate-darkest)" stroke="#2a2d30" stroke-width="1.5"/>
+    <path d="M 300 260 L 345 230 L 360 280 L 340 310 L 330 345 L 310 340 L 290 305 Z" fill="url(#plate-mid)" stroke="#2a2d30" stroke-width="1.5"/>
+
+    <!-- Circuit traces -->
+    <g stroke="#555d63" stroke-width="1.2" fill="none" opacity="0.5" stroke-linecap="round">
+      <polyline points="350,120 365,140 380,155"/>
+      <polyline points="370,145 390,170 395,185"/>
+      <polyline points="390,240 380,260 370,270"/>
+      <polyline points="395,255 400,275 395,290"/>
+      <polyline points="125,180 140,195 135,210"/>
+      <polyline points="130,210 145,225 140,240"/>
+      <polyline points="240,155 255,170 245,185"/>
+      <polyline points="155,305 165,315 160,325"/>
+    </g>
+    <g fill="#555d63" opacity="0.5">
+      <rect x="378" y="153" width="5" height="5" rx="1"/>
+      <rect x="393" y="183" width="5" height="5" rx="1"/>
+      <rect x="393" y="288" width="5" height="5" rx="1"/>
+      <rect x="133" y="208" width="5" height="5" rx="1"/>
+      <rect x="138" y="238" width="5" height="5" rx="1"/>
+      <rect x="158" y="323" width="5" height="5" rx="1"/>
+    </g>
+
+    <!-- Edge highlights -->
+    <g stroke="#6a7178" stroke-width="1" fill="none" opacity="0.35" stroke-linecap="round">
+      <path d="M 160 120 C 180 95, 220 78, 260 74 C 300 74, 335 88, 360 110"/>
+      <path d="M 110 160 C 105 185, 100 210, 105 240"/>
+      <path d="M 335 108 L 350 125 L 370 148"/>
+    </g>
+
+    <!-- Neural pathway -->
+    <path d="M 250 175 L 265 200 L 240 210 L 270 245 L 250 255 L 280 290 L 265 300 L 290 330 L 295 345 L 270 350 L 255 325 L 240 335 L 220 300 L 235 285 L 215 260 L 230 245 L 215 220 L 235 205 Z" fill="url(#neural-orange)" opacity="0.9"/>
+    <path d="M 265 260 L 280 290 L 265 300 L 290 330 L 295 345 L 270 350 L 255 325 L 240 335 L 220 300 L 235 285 L 250 295 Z" fill="url(#neural-peach)" opacity="0.6"/>
+
+    <!-- Orange circuit branches -->
+    <g filter="url(#circuit-glow)">
+      <line x1="255" y1="220" x2="265" y2="175" stroke="#FD7B41" stroke-width="5" stroke-linecap="round"/>
+      <polyline points="255,190 230,160 200,140" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="260,180 268,145 275,115" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="265,175 300,148 340,135" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="270,200 310,195 350,200" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="275,240 310,250 340,260" fill="none" stroke="#FD7B41" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Glowing nodes -->
+    <g filter="url(#node-glow)">
+      <circle cx="200" cy="140" r="11" fill="#FD7B41"/><circle cx="200" cy="140" r="6" fill="#EDBF9B"/><circle cx="200" cy="140" r="3" fill="#fff" opacity="0.9"/>
+      <circle cx="275" cy="115" r="11" fill="#FD7B41"/><circle cx="275" cy="115" r="6" fill="#EDBF9B"/><circle cx="275" cy="115" r="3" fill="#fff" opacity="0.9"/>
+      <circle cx="340" cy="135" r="11" fill="#FD7B41"/><circle cx="340" cy="135" r="6" fill="#EDBF9B"/><circle cx="340" cy="135" r="3" fill="#fff" opacity="0.9"/>
+      <circle cx="350" cy="200" r="11" fill="#FD7B41"/><circle cx="350" cy="200" r="6" fill="#EDBF9B"/><circle cx="350" cy="200" r="3" fill="#fff" opacity="0.9"/>
+      <circle cx="340" cy="260" r="8" fill="#FD7B41"/><circle cx="340" cy="260" r="5" fill="#EDBF9B"/><circle cx="340" cy="260" r="2.5" fill="#fff" opacity="0.9"/>
+      <circle cx="255" cy="195" r="13" fill="#FD7B41"/><circle cx="255" cy="195" r="8" fill="#EDBF9B"/><circle cx="255" cy="195" r="4" fill="#fff" opacity="0.9"/>
+    </g>
+
+    <!-- Brain stem -->
+    <path d="M 250 345 L 265 355 L 275 385 L 270 420 L 245 420 L 240 395 L 235 370 L 230 355 Z" fill="url(#stem-grad)" stroke="#2a2d30" stroke-width="1.5"/>
+    <line x1="237" y1="370" x2="268" y2="370" stroke="#262a2d" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="240" y1="385" x2="270" y2="385" stroke="#262a2d" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="243" y1="400" x2="268" y2="400" stroke="#262a2d" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="245" y1="412" x2="267" y2="412" stroke="#262a2d" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Typography -->
+  <g transform="translate(210, 0)">
+    <text y="112" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="72px" font-weight="900" letter-spacing="-0.03em">
+      <tspan fill="#3C4044">Mecha</tspan><tspan fill="#FD7B41">Search</tspan>
+    </text>
+    <text y="152" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19px" font-weight="700" letter-spacing="0.35em" fill="#3C4044" opacity="0.7">
+      RESEARCH AGENT
+    </text>
+  </g>
+</svg>

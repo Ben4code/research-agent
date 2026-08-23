@@ -1,0 +1,376 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Subtle glow filter for orange circuits -->
+    <filter id="circuit-glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Node outer glow -->
+    <filter id="node-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Charcoal plate gradients for depth -->
+    <linearGradient id="plate-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#454a4e"/>
+      <stop offset="100%" stop-color="#33373a"/>
+    </linearGradient>
+    <linearGradient id="plate-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a4f54"/>
+      <stop offset="100%" stop-color="#3c4044"/>
+    </linearGradient>
+    <linearGradient id="plate-light" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#565b60"/>
+      <stop offset="100%" stop-color="#44494d"/>
+    </linearGradient>
+    <linearGradient id="plate-darkest" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a3e42"/>
+      <stop offset="100%" stop-color="#2a2d30"/>
+    </linearGradient>
+    <linearGradient id="stem-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3c4044"/>
+      <stop offset="100%" stop-color="#2e3134"/>
+    </linearGradient>
+    <!-- Orange gradient for the neural pathway -->
+    <linearGradient id="neural-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FD7B41"/>
+      <stop offset="60%" stop-color="#EDBF9B"/>
+      <stop offset="100%" stop-color="#f0a060"/>
+    </linearGradient>
+    <linearGradient id="neural-peach" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EDBF9B"/>
+      <stop offset="100%" stop-color="#e8a870"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============================== -->
+  <!-- BRAIN OUTER SILHOUETTE SHAPE   -->
+  <!-- ============================== -->
+  <!-- Main brain outline - side profile facing right -->
+  <path d="
+    M 215 420
+    C 205 400, 200 385, 195 370
+    C 185 360, 170 345, 155 325
+    C 130 300, 105 265, 95 235
+    C 80 195, 90 155, 115 125
+    C 135 100, 165 82, 200 75
+    C 230 68, 260 70, 290 78
+    C 320 85, 345 100, 365 120
+    C 390 145, 405 175, 415 210
+    C 425 245, 420 275, 405 305
+    C 395 325, 375 340, 355 350
+    C 340 360, 330 355, 320 345
+    C 310 335, 305 345, 300 360
+    C 295 380, 280 395, 270 420
+    Z
+  " fill="#2e3236" stroke="none"/>
+
+  <!-- ============================== -->
+  <!-- GEOMETRIC BRAIN PLATES         -->
+  <!-- ============================== -->
+
+  <!-- Plate: Top-left (parietal back) -->
+  <path d="
+    M 140 140
+    C 155 105, 185 82, 220 75
+    L 245 80
+    L 220 130
+    L 175 155
+    Z
+  " fill="url(#plate-light)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Top-center (parietal) -->
+  <path d="
+    M 245 80
+    C 270 72, 295 78, 320 90
+    L 330 115
+    L 285 145
+    L 220 130
+    Z
+  " fill="url(#plate-mid)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Top-right (frontal upper) -->
+  <path d="
+    M 320 90
+    C 350 105, 375 130, 395 165
+    L 390 200
+    L 345 185
+    L 330 115
+    Z
+  " fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Right-upper (frontal mid) -->
+  <path d="
+    M 390 200
+    C 405 230, 415 255, 415 275
+    L 400 305
+    L 360 280
+    L 345 230
+    L 345 185
+    Z
+  " fill="url(#plate-darkest)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Right-lower (temporal front) -->
+  <path d="
+    M 400 305
+    C 390 325, 370 340, 355 350
+    L 330 345
+    L 340 310
+    L 360 280
+    Z
+  " fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Center core -->
+  <path d="
+    M 220 130
+    L 285 145
+    L 330 115
+    L 345 185
+    L 345 230
+    L 300 260
+    L 250 240
+    L 210 200
+    L 175 155
+    Z
+  " fill="url(#plate-mid)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Left mid (occipital) -->
+  <path d="
+    M 140 140
+    L 175 155
+    L 210 200
+    L 195 245
+    L 155 265
+    L 115 235
+    C 100 200, 105 165, 115 145
+    Z
+  " fill="url(#plate-light)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Left lower (occipital lower) -->
+  <path d="
+    M 115 235
+    L 155 265
+    L 160 295
+    L 140 310
+    C 120 295, 105 270, 100 250
+    Z
+  " fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Bottom-left (cerebellum upper) -->
+  <path d="
+    M 140 310
+    L 160 295
+    L 195 310
+    L 200 330
+    L 175 340
+    C 160 335, 148 325, 140 310
+    Z
+  " fill="url(#plate-darkest)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Bottom center-left (cerebellum lower) -->
+  <path d="
+    M 175 340
+    L 200 330
+    L 230 335
+    L 220 355
+    L 195 365
+    C 185 360, 178 350, 175 340
+    Z
+  " fill="url(#plate-dark)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Center lower -->
+  <path d="
+    M 195 245
+    L 250 240
+    L 300 260
+    L 290 305
+    L 250 320
+    L 230 335
+    L 200 330
+    L 195 310
+    L 160 295
+    L 155 265
+    Z
+  " fill="url(#plate-darkest)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Plate: Lower-right -->
+  <path d="
+    M 300 260
+    L 345 230
+    L 360 280
+    L 340 310
+    L 330 345
+    L 310 340
+    L 290 305
+    Z
+  " fill="url(#plate-mid)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- ============================== -->
+  <!-- CIRCUIT BOARD TRACES (subtle)  -->
+  <!-- ============================== -->
+  <g stroke="#555d63" stroke-width="1.2" fill="none" opacity="0.5" stroke-linecap="round">
+    <!-- Traces on top-right plate -->
+    <polyline points="350,120 365,140 380,155"/>
+    <polyline points="370,145 390,170 395,185"/>
+    <!-- Traces on right plate -->
+    <polyline points="390,240 380,260 370,270"/>
+    <polyline points="395,255 400,275 395,290"/>
+    <!-- Traces on left plate -->
+    <polyline points="125,180 140,195 135,210"/>
+    <polyline points="130,210 145,225 140,240"/>
+    <!-- Traces on center plate -->
+    <polyline points="240,155 255,170 245,185"/>
+    <!-- Traces on bottom-left -->
+    <polyline points="155,305 165,315 160,325"/>
+    <!-- Small circuit dots on traces -->
+  </g>
+  <!-- Small circuit endpoint squares -->
+  <g fill="#555d63" opacity="0.5">
+    <rect x="378" y="153" width="5" height="5" rx="1"/>
+    <rect x="393" y="183" width="5" height="5" rx="1"/>
+    <rect x="393" y="288" width="5" height="5" rx="1"/>
+    <rect x="133" y="208" width="5" height="5" rx="1"/>
+    <rect x="138" y="238" width="5" height="5" rx="1"/>
+    <rect x="158" y="323" width="5" height="5" rx="1"/>
+  </g>
+
+  <!-- ============================== -->
+  <!-- PLATE EDGE HIGHLIGHTS          -->
+  <!-- ============================== -->
+  <g stroke="#6a7178" stroke-width="1" fill="none" opacity="0.35" stroke-linecap="round">
+    <!-- Top silhouette highlight -->
+    <path d="M 160 120 C 180 95, 220 78, 260 74 C 300 74, 335 88, 360 110"/>
+    <!-- Left edge highlight -->
+    <path d="M 110 160 C 105 185, 100 210, 105 240"/>
+    <!-- Top of frontal plate -->
+    <path d="M 335 108 L 350 125 L 370 148"/>
+  </g>
+
+  <!-- ============================== -->
+  <!-- PEACH/ORANGE NEURAL PATHWAY    -->
+  <!-- ============================== -->
+  <!-- The organic lightning-bolt shape in the lower-center -->
+  <path d="
+    M 250 175
+    L 265 200
+    L 240 210
+    L 270 245
+    L 250 255
+    L 280 290
+    L 265 300
+    L 290 330
+    L 295 345
+    L 270 350
+    L 255 325
+    L 240 335
+    L 220 300
+    L 235 285
+    L 215 260
+    L 230 245
+    L 215 220
+    L 235 205
+    Z
+  " fill="url(#neural-orange)" opacity="0.9"/>
+
+  <!-- Lighter peach overlay for depth on lower part -->
+  <path d="
+    M 265 260
+    L 280 290
+    L 265 300
+    L 290 330
+    L 295 345
+    L 270 350
+    L 255 325
+    L 240 335
+    L 220 300
+    L 235 285
+    L 250 295
+    Z
+  " fill="url(#neural-peach)" opacity="0.6"/>
+
+  <!-- ============================== -->
+  <!-- ORANGE CIRCUIT BRANCHES        -->
+  <!-- ============================== -->
+  <g filter="url(#circuit-glow)">
+    <!-- Main trunk: from center upward -->
+    <line x1="255" y1="220" x2="265" y2="175" stroke="#FD7B41" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- Branch 1: up-left to top-left node -->
+    <polyline points="255,190 230,160 200,140" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Branch 2: up vertical to top node -->
+    <polyline points="260,180 268,145 275,115" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Branch 3: up-right to upper-right node -->
+    <polyline points="265,175 300,148 340,135" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Branch 4: right to mid-right node -->
+    <polyline points="270,200 310,195 350,200" fill="none" stroke="#FD7B41" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Branch 5: down-right -->
+    <polyline points="275,240 310,250 340,260" fill="none" stroke="#FD7B41" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- ============================== -->
+  <!-- GLOWING CIRCUIT NODES          -->
+  <!-- ============================== -->
+  <g filter="url(#node-glow)">
+    <!-- Node 1: top-left -->
+    <circle cx="200" cy="140" r="11" fill="#FD7B41"/>
+    <circle cx="200" cy="140" r="6" fill="#EDBF9B"/>
+    <circle cx="200" cy="140" r="3" fill="#fff" opacity="0.9"/>
+
+    <!-- Node 2: top-center -->
+    <circle cx="275" cy="115" r="11" fill="#FD7B41"/>
+    <circle cx="275" cy="115" r="6" fill="#EDBF9B"/>
+    <circle cx="275" cy="115" r="3" fill="#fff" opacity="0.9"/>
+
+    <!-- Node 3: upper-right -->
+    <circle cx="340" cy="135" r="11" fill="#FD7B41"/>
+    <circle cx="340" cy="135" r="6" fill="#EDBF9B"/>
+    <circle cx="340" cy="135" r="3" fill="#fff" opacity="0.9"/>
+
+    <!-- Node 4: mid-right -->
+    <circle cx="350" cy="200" r="11" fill="#FD7B41"/>
+    <circle cx="350" cy="200" r="6" fill="#EDBF9B"/>
+    <circle cx="350" cy="200" r="3" fill="#fff" opacity="0.9"/>
+
+    <!-- Node 5: lower-right (smaller) -->
+    <circle cx="340" cy="260" r="8" fill="#FD7B41"/>
+    <circle cx="340" cy="260" r="5" fill="#EDBF9B"/>
+    <circle cx="340" cy="260" r="2.5" fill="#fff" opacity="0.9"/>
+
+    <!-- Node: junction center -->
+    <circle cx="255" cy="195" r="13" fill="#FD7B41"/>
+    <circle cx="255" cy="195" r="8" fill="#EDBF9B"/>
+    <circle cx="255" cy="195" r="4" fill="#fff" opacity="0.9"/>
+  </g>
+
+  <!-- ============================== -->
+  <!-- BRAIN STEM                     -->
+  <!-- ============================== -->
+  <path d="
+    M 250 345
+    L 265 355
+    L 275 385
+    L 270 420
+    L 245 420
+    L 240 395
+    L 235 370
+    L 230 355
+    Z
+  " fill="url(#stem-grad)" stroke="#2a2d30" stroke-width="1.5"/>
+
+  <!-- Stem segments/ridges -->
+  <line x1="237" y1="370" x2="268" y2="370" stroke="#262a2d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="240" y1="385" x2="270" y2="385" stroke="#262a2d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="243" y1="400" x2="268" y2="400" stroke="#262a2d" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="245" y1="412" x2="267" y2="412" stroke="#262a2d" stroke-width="2" stroke-linecap="round"/>
+
+</svg>

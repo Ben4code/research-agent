@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { cn } from '@/lib/utils';
+import { ArrowRight, FileSearch, Plus, Sparkles } from 'lucide-react';
 
 interface ResearchItem {
   id: string;
@@ -32,8 +33,7 @@ async function fetchResearch(): Promise<ResearchItem[]> {
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -45,62 +45,72 @@ export default async function ResearchPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <h1 className="text-lg font-bold text-foreground">
-                Research Agent
-              </h1>
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+              <span className="text-lg font-black tracking-tight text-foreground">
+                Mecha<span className="text-calcite-orange">Search</span>
+              </span>
             </Link>
-            <span className="text-muted-foreground">/ History</span>
+            <span className="hidden text-muted-foreground sm:inline">/</span>
+            <span className="hidden text-muted-foreground sm:inline">History</span>
           </div>
           <Link
-            href="/"
-            className={cn(buttonVariants({ size: 'sm' }))}
+            href="/research/new"
+            className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
           >
+            <Plus className="h-3.5 w-3.5" />
             New Research
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">
-              My Research
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {items.length} project{items.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        {/* Page heading */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-black tracking-[-0.02em] text-foreground">
+            My Research
+          </h1>
+          <p className="mt-2 max-w-[58ch] text-muted-foreground">
+            {items.length} project{items.length !== 1 ? 's' : ''} — reopen any
+            research to see its report and sources.
+          </p>
         </div>
 
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-20 text-center">
-            <p className="text-lg font-medium text-muted-foreground">
-              No research projects yet
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Start your first research project to see it here.
-            </p>
+          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-calcite-light py-20 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-calcite-peach/60 text-calcite-charcoal">
+              <FileSearch className="h-7 w-7" />
+            </span>
+            <div>
+              <p className="text-lg font-medium text-foreground">
+                No research projects yet
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ask your first question and watch the agent go to work.
+              </p>
+            </div>
             <Link
-              href="/"
-              className={cn(buttonVariants(), 'mt-2')}
+              href="/research/new"
+              className={cn(buttonVariants(), 'mt-2 gap-1.5')}
             >
+              <Plus className="h-4 w-4" />
               Start Research
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {items.map((item) => (
               <Link
                 key={item.id}
                 href={`/research/${item.id}`}
-                className="group flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-accent"
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-calcite-light bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-calcite-orange/50 hover:shadow-lg hover:shadow-calcite-orange/5"
               >
-                <div className="flex flex-col gap-1.5 overflow-hidden">
-                  <p className="truncate font-medium text-foreground">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <p className="truncate text-[15px] font-medium leading-snug text-foreground">
                     {item.question}
                   </p>
                   <div className="flex items-center gap-3">
@@ -110,8 +120,8 @@ export default async function ResearchPage() {
                     </span>
                   </div>
                 </div>
-                <span className="ml-4 text-muted-foreground transition-transform group-hover:translate-x-0.5">
-                  →
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-calcite-light text-muted-foreground transition-all group-hover:border-calcite-orange/50 group-hover:bg-calcite-peach/60 group-hover:text-calcite-charcoal">
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </Link>
             ))}
