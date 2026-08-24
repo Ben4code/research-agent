@@ -14,14 +14,23 @@ export interface FetchPageResponse {
   content: string;
 }
 
-export interface ResearchGap {
-  topic: string;
-  description: string;
-}
-
 export interface ResearchReport {
   title: string;
   content: string;
+}
+
+// ── Iterative research (Phase 8) ────────────────────────────────────
+
+export interface ResearchTask {
+  description: string;
+  searchQueries: string[];
+}
+
+export interface ResearchBudget {
+  maxIterations: number;
+  maxSources: number;
+  maxDurationMinutes: number;
+  maxTokens: number;
 }
 
 // ── Workflow types (shared between API client and worker) ──────────
@@ -30,4 +39,5 @@ export interface ResearchWorkflowInput {
   researchId: string;
   question: string;
   instructions?: string;
+  budget?: Partial<ResearchBudget>;
 }

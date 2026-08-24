@@ -33,5 +33,6 @@ When researching:
 
 You must respond with structured output matching the provided schema.`,
   model: 'opencode-go/hy3',
+  // model: 'opencode-go/ox-alpha-free',
   tools: researchTools,
 });

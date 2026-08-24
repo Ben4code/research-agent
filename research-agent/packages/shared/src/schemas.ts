@@ -85,10 +85,34 @@ export const findingsSchema = z.object({
   findings: z.array(findingSchema),
 });
 
+// ── Gap analysis schemas (Phase 8 — iterative research) ─────────────
+
+export const researchGapSchema = z.object({
+  topic: z.string().describe('The missing topic or aspect that still needs research'),
+  description: z
+    .string()
+    .describe('Why this is an important gap and what specific information is missing'),
+  searchQueries: z
+    .array(z.string())
+    .describe('Search queries that would find information to fill this gap'),
+});
+
+export const gapAnalysisSchema = z.object({
+  isComplete: z
+    .boolean()
+    .describe('True when the findings sufficiently answer the research question'),
+  rationale: z.string().describe('Brief reasoning for the completeness decision'),
+  gaps: z
+    .array(researchGapSchema)
+    .describe('Important gaps that still need research; empty when complete'),
+});
+
 export type ResearchStep = z.infer<typeof researchStepSchema>;
 export type ResearchPlan = z.infer<typeof researchPlanSchema>;
 export type Finding = z.infer<typeof findingSchema>;
 export type Findings = z.infer<typeof findingsSchema>;
+export type ResearchGap = z.infer<typeof researchGapSchema>;
+export type GapAnalysis = z.infer<typeof gapAnalysisSchema>;
 
 // ── Report generation schema ────────────────────────────────────────
 

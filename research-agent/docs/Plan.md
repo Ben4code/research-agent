@@ -392,14 +392,14 @@ Are there important gaps?
 
 ### Tasks
 
-- [ ] Define finding completeness criteria.
-- [ ] Add gap-analysis Agent step.
-- [ ] Return structured gaps.
-- [ ] Create additional research queries.
-- [ ] Limit research iterations.
-- [ ] Add maximum source count.
-- [ ] Add maximum research duration.
-- [ ] Add token/cost budget.
+- [x] Define finding completeness criteria.
+- [x] Add gap-analysis Agent step.
+- [x] Return structured gaps.
+- [x] Create additional research queries.
+- [x] Limit research iterations.
+- [x] Add maximum source count.
+- [x] Add maximum research duration.
+- [x] Add token/cost budget.
 
 ### Example
 
@@ -437,12 +437,12 @@ type ResearchEvent =
 
 ### Tasks
 
-- [ ] Define event schema.
-- [ ] Store recent workflow events.
-- [ ] Add event publishing mechanism.
-- [ ] Implement NestJS SSE endpoint.
-- [ ] Connect React EventSource.
-- [ ] Display workflow progress.
+- [x] Define event schema.
+- [x] Store recent workflow events.
+- [x] Add event publishing mechanism.
+- [x] Implement NestJS SSE endpoint.
+- [x] Connect React EventSource.
+- [x] Display workflow progress.
 
 ## 12. Phase 10 — React Application
 
@@ -468,15 +468,15 @@ Build the user-facing research experience.
 
 ### Tasks
 
-- [ ] Build research form.
-- [ ] Build research history.
-- [ ] Build progress UI.
-- [ ] Implement SSE connection.
-- [ ] Build report renderer.
-- [ ] Build source links.
-- [ ] Add loading states.
-- [ ] Add failure states.
-- [ ] Add empty states.
+- [x] Build research form.
+- [x] Build research history.
+- [x] Build progress UI.
+- [x] Implement SSE connection.
+- [x] Build report renderer.
+- [x] Build source links.
+- [x] Add loading states.
+- [x] Add failure states.
+- [x] Add empty states.
 
 ## 13. Phase 11 — Durable Workflow Testing
 

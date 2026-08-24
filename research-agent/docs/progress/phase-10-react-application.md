@@ -1,8 +1,8 @@
 # Phase 10 — React Application
 
-**Status:** 🔄 In Progress
+**Status:** ✅ Complete
 **Milestone:** M4 — Frontend
-**Started:** 2026-08-22
+**Dependencies:** Phase 9 (Progress Events)
 
 ## Goals
 
@@ -11,79 +11,81 @@ Build the user-facing research experience.
 ## Pages
 
 - [x] `/` — Research dashboard (landing page with CTAs)
-- [ ] `/research/new` — Create research form
+- [x] `/research/new` — Create research form
 - [x] `/research` — Research history list
-- [x] `/research/[id]` — Research detail (report + sources + findings)
+- [x] `/research/[id]` — Research detail (progress + report + sources + findings)
 
 ## Components
 
 | Component          | Status | File                                        |
 | ------------------ | ------ | ------------------------------------------- |
-| ResearchForm       | ⬜     | —                                           |
+| ResearchForm       | ✅     | Inline in `/research/new/page.tsx`          |
 | ResearchList       | ✅     | Inline in `/research/page.tsx`              |
-| ResearchProgress   | ⬜     | — (depends on Phase 9 SSE)                 |
-| ResearchStep       | ⬜     | — (depends on Phase 9 SSE)                 |
-| ResearchReport     | ✅     | Inline in `/research/[id]/page.tsx`        |
-| SourceList         | ✅     | Inline in `/research/[id]/page.tsx`        |
-| FindingList        | ✅     | Inline in `/research/[id]/page.tsx`        |
-| StatusBadge        | ✅     | `src/components/status-badge.tsx`          |
+| ResearchProgress   | ✅     | `src/components/research-progress.tsx`      |
+| ResearchStep       | ✅     | Timeline items in `research-progress.tsx`   |
+| ResearchReport     | ✅     | `ReportsPanel` in `src/components/stats-tabs.tsx` |
+| SourceList         | ✅     | `SourcesPanel` in `stats-tabs.tsx`          |
+| FindingList        | ✅     | `FindingsPanel` in `stats-tabs.tsx`         |
+| StatusBadge        | ✅     | `src/components/status-badge.tsx`           |
 
 ## Tasks
 
-- [ ] Build research form (`/research/new`)
+- [x] Build research form (`/research/new`)
 - [x] Build research history (`/research`)
-- [ ] Build progress UI (depends on Phase 9 — SSE events)
-- [ ] Implement SSE connection (depends on Phase 9)
-- [x] Build report renderer (renders report content in detail page)
-- [x] Build source links (sidebar with external links in detail page)
-- [ ] Add loading states (skeletons / spinners)
+- [x] Build progress UI (`research-progress.tsx` — SSE timeline)
+- [x] Implement SSE connection (`EventSource` + per-type listeners)
+- [x] Build report renderer (ReactMarkdown + prose-calcite theme)
+- [x] Build source links (external link cards)
+- [x] Add loading states (`loading.tsx` skeletons for history + detail)
 - [x] Add failure states (failed research shows message in detail page)
-- [x] Add empty states (empty history list, no report, no sources)
+- [x] Add empty states (empty history list, no report, no sources, no findings)
 
 ## What's Done
 
-- Home page with "Start Research" and "View History" buttons
-- History page fetches `GET /api/research` server-side, renders list with status badges + dates
-- Detail page fetches `GET /api/research/:id` server-side, renders:
-  - Header with question, status badge, instructions, timestamps
-  - Stats row (sources count, findings count, reports count)
-  - Report content (2/3 width)
-  - Sources sidebar with external links (1/3 width)
-  - Findings with confidence indicators (color-coded)
-- `StatusBadge` component maps all `ResearchStatus` values to shadcn Badge variants
-- shadcn/ui components installed: button, card, input, textarea, label, badge, sonner
-
-## What's Left
-
-- Research form page (`/research/new`) with question + instructions inputs
-- POST to API on submit, redirect to `/research/[id]`
-- SSE-based progress UI (after Phase 9)
-- Loading skeletons for async pages
-- Markdown rendering for report content (currently plain text in `<pre>`)
-- Dark mode toggle
+- Landing page with "Start Research" and "View History" CTAs + GSAP animations
+- New research form (`/research/new`) posts to the API and redirects to detail
+- History page (`/research`) lists projects server-side with status badges + dates
+- Detail page (`/research/[id]`) renders:
+  - Live `ResearchProgress` timeline for non-terminal statuses (SSE-driven,
+    auto-refreshes on completion/failure)
+  - Tabbed full-width panels: Reports (Markdown report), Sources (grid of
+    external links), Findings (claims with confidence chips)
+- Loading skeletons for `/research` and `/research/[id]`
+- Calcite design system: charcoal/light/orange/peach tokens, Roboto + Roboto Mono
 
 ## Decisions
 
 - **shadcn/ui:** Uses base-ui primitives (not Radix). No `asChild` prop — use `buttonVariants()` with `<Link>` instead
 - **Data fetching:** Server Components with `fetch()` and `cache: 'no-store'`
 - **API URL:** `NEXT_PUBLIC_API_URL` env var, defaults to `http://localhost:3001`
+- **SSE:** client attaches one listener per event type (named SSE events aren't
+  dispatched as the default `message` event)
 
 ## Verification
 
 - [x] `pnpm build` — Next.js build passes with all routes
 - [x] Home page renders with CTA buttons
-- [x] History page renders 4 seeded research projects
+- [x] History page renders seeded research projects
 - [x] Detail page renders report, sources, findings for completed research
 - [x] Detail page shows failure message for failed research
-- [ ] Research form submission creates new research
+- [x] Research form submission creates new research
+- [x] Live progress timeline streams events + refreshes on completion
+- [x] Loading skeletons render during navigation
+- [x] Contrast + overflow checks pass (light + dark, desktop + mobile)
+- [x] IMPECCABLE detector clean
 
 ## Files
 
 - `apps/web/src/app/page.tsx`
 - `apps/web/src/app/research/page.tsx`
+- `apps/web/src/app/research/new/page.tsx`
 - `apps/web/src/app/research/[id]/page.tsx`
+- `apps/web/src/app/research/loading.tsx`
+- `apps/web/src/app/research/[id]/loading.tsx`
+- `apps/web/src/components/research-progress.tsx`
+- `apps/web/src/components/stats-tabs.tsx`
 - `apps/web/src/components/status-badge.tsx`
-- `apps/web/src/components/ui/` (7 shadcn components)
+- `apps/web/src/components/ui/` (shadcn components)
 - `apps/web/src/app/layout.tsx`
 - `apps/web/src/app/globals.css`
 - `apps/web/.env.local`

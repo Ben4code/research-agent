@@ -1,10 +1,11 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
-  Client,
-  Connection,
-  type WorkflowClient,
-} from '@temporalio/client';
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Client, Connection, type WorkflowClient } from '@temporalio/client';
 import type { ResearchWorkflowInput } from '@research-agent/shared';
 
 @Injectable()
@@ -31,7 +32,9 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
         connection: this.connection,
         namespace,
       });
-      this.logger.log(`Connected to Temporal at ${address} (namespace: ${namespace})`);
+      this.logger.log(
+        `Connected to Temporal at ${address} (namespace: ${namespace})`,
+      );
     } catch (error) {
       this.logger.error(`Failed to connect to Temporal at ${address}`, error);
       throw error;
@@ -64,7 +67,9 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
       args: [input],
     });
 
-    this.logger.log(`Started workflow ${workflowId} on task queue ${taskQueue}`);
+    this.logger.log(
+      `Started workflow ${workflowId} on task queue ${taskQueue}`,
+    );
     return handle.workflowId;
   }
 }

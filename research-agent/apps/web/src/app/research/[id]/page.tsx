@@ -2,7 +2,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { StatusBadge } from '@/components/status-badge';
 import { StatsTabs } from '@/components/stats-tabs';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ResearchProgress } from '@/components/research-progress';
+import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
+import { Navbar } from '@/components/navbar';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
+
+const IN_PROGRESS_STATUSES = new Set([
+  'pending',
+  'planning',
+  'researching',
+  'analyzing',
+  'generating_report',
+]);
 
 interface ResearchDetail {
   id: string;
@@ -78,7 +90,7 @@ export default async function ResearchDetailPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
+      {/* <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link
             href="/research"
@@ -92,6 +104,28 @@ export default async function ResearchDetailPage({
               <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
             </Link>
           </div>
+        </div>
+      </header> */}
+      {/* <Navbar /> */}
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+              <span className="text-lg font-black tracking-tight text-foreground">
+                Mecha<span className="text-calcite-orange">Search</span>
+              </span>
+            </Link>
+          </div>
+          <Link
+            href="/research/new"
+            className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Research
+          </Link>
         </div>
       </header>
 
@@ -118,6 +152,11 @@ export default async function ResearchDetailPage({
             </p>
           )}
         </div>
+
+        {/* Live progress for in-progress research */}
+        {IN_PROGRESS_STATUSES.has(research.status) && (
+          <ResearchProgress researchId={research.id} />
+        )}
 
         {/* Tabbed content: Sources / Findings / Reports */}
         <StatsTabs

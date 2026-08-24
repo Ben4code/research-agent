@@ -11,7 +11,8 @@ export class CreateResearchDocDto {
 
   @ApiPropertyOptional({
     description: 'Optional additional instructions to guide the research',
-    example: 'Focus on pricing, APIs, payment methods, and developer experience',
+    example:
+      'Focus on pricing, APIs, payment methods, and developer experience',
     maxLength: 2000,
   })
   instructions?: string;

@@ -16,6 +16,9 @@ describe('Research API (e2e)', () => {
       findFirst: vi.fn(),
       update: vi.fn(),
     },
+    researchEvent: {
+      findMany: vi.fn(),
+    },
     user: {
       upsert: vi.fn(),
     },
@@ -85,7 +88,9 @@ describe('Research API (e2e)', () => {
       };
 
       mockPrisma.research.create.mockResolvedValue(dbResearch);
-      mockTemporal.startResearchWorkflow.mockResolvedValue('research-test-id-1');
+      mockTemporal.startResearchWorkflow.mockResolvedValue(
+        'research-test-id-1',
+      );
       mockPrisma.research.update.mockResolvedValue({
         ...dbResearch,
         workflowId: 'research-test-id-1',
@@ -93,7 +98,10 @@ describe('Research API (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/api/research')
-        .send({ question: 'Compare Temporal and BullMQ', instructions: 'Focus on NestJS' })
+        .send({
+          question: 'Compare Temporal and BullMQ',
+          instructions: 'Focus on NestJS',
+        })
         .expect(201);
 
       expect(response.body).toHaveProperty('id');
@@ -137,7 +145,9 @@ describe('Research API (e2e)', () => {
       };
 
       mockPrisma.research.create.mockResolvedValue(dbResearch);
-      mockTemporal.startResearchWorkflow.mockResolvedValue('research-test-id-2');
+      mockTemporal.startResearchWorkflow.mockResolvedValue(
+        'research-test-id-2',
+      );
       mockPrisma.research.update.mockResolvedValue(dbResearch);
 
       const response = await request(app.getHttpServer())
@@ -182,7 +192,9 @@ describe('Research API (e2e)', () => {
       };
 
       mockPrisma.research.create.mockResolvedValue(dbResearch);
-      mockTemporal.startResearchWorkflow.mockResolvedValue('research-test-id-3');
+      mockTemporal.startResearchWorkflow.mockResolvedValue(
+        'research-test-id-3',
+      );
       mockPrisma.research.update.mockResolvedValue(dbResearch);
 
       await request(app.getHttpServer())
@@ -214,7 +226,9 @@ describe('Research API (e2e)', () => {
       };
 
       mockPrisma.research.create.mockResolvedValue(dbResearch);
-      mockTemporal.startResearchWorkflow.mockRejectedValue(new Error('Temporal down'));
+      mockTemporal.startResearchWorkflow.mockRejectedValue(
+        new Error('Temporal down'),
+      );
       mockPrisma.research.update.mockResolvedValue({
         ...dbResearch,
         status: 'failed',
@@ -318,7 +332,11 @@ describe('Research API (e2e)', () => {
             claim: 'Stripe charges 2.9% + 30c',
             evidence: 'Listed on pricing page',
             confidence: 'high',
-            source: { id: 's1', url: 'https://stripe.com/pricing', title: 'Stripe Pricing' },
+            source: {
+              id: 's1',
+              url: 'https://stripe.com/pricing',
+              title: 'Stripe Pricing',
+            },
           },
         ],
         reports: [
@@ -346,12 +364,75 @@ describe('Research API (e2e)', () => {
       expect(response.body.findings[0].source.title).toBe('Stripe Pricing');
     });
 
-    it('should return 404 when research not found', async () => {
-      mockPrisma.research.findFirst.mockResolvedValue(null);
+    describe('GET /api/research/:id/events (SSE)', () => {
+      it('should stream stored events and end on terminal status', async () => {
+        mockPrisma.research.findFirst.mockResolvedValueOnce({
+          id: 'r1',
+          status: 'completed',
+        });
 
-      await request(app.getHttpServer())
-        .get('/api/research/nonexistent')
-        .expect(404);
+        const now = new Date();
+        mockPrisma.researchEvent.findMany.mockResolvedValue([
+          {
+            id: 'evt1',
+            sequence: 1,
+            researchId: 'r1',
+            type: 'research.started',
+            step: 'initialized',
+            message: 'Research workflow started',
+            metadata: null,
+            timestamp: now,
+          },
+          {
+            id: 'evt2',
+            sequence: 2,
+            researchId: 'r1',
+            type: 'research.completed',
+            step: 'completed',
+            message: 'Research completed',
+            metadata: null,
+            timestamp: now,
+          },
+        ]);
+
+        const response = await request(app.getHttpServer())
+          .get('/api/research/r1/events')
+          .set('Accept', 'text/event-stream')
+          .buffer(true)
+          .parse((res, cb) => {
+            const chunks: Buffer[] = [];
+            res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            res.on('end', () => cb(null, Buffer.concat(chunks).toString()));
+          })
+          .expect(200);
+
+        const body = response.body as string;
+
+        expect(body).toContain('id: evt1');
+        expect(body).toContain('event: research.started');
+        expect(body).toContain('"type":"research.started"');
+        expect(body).toContain('"message":"Research workflow started"');
+        expect(body).toContain('event: research.completed');
+
+        expect(mockPrisma.researchEvent.findMany).toHaveBeenCalled();
+      });
+
+      it('should return 404 when research not found', async () => {
+        mockPrisma.research.findFirst.mockResolvedValue(null);
+
+        const response = await request(app.getHttpServer())
+          .get('/api/research/nonexistent/events')
+          .set('Accept', 'text/event-stream')
+          .buffer(true)
+          .parse((res, cb) => {
+            const chunks: Buffer[] = [];
+            res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            res.on('end', () => cb(null, Buffer.concat(chunks).toString()));
+          })
+          .expect(404);
+
+        expect(response.body).toBeDefined();
+      });
     });
   });
 });

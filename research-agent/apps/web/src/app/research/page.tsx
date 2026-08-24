@@ -55,8 +55,6 @@ export default async function ResearchPage() {
                 Mecha<span className="text-calcite-orange">Search</span>
               </span>
             </Link>
-            <span className="hidden text-muted-foreground sm:inline">/</span>
-            <span className="hidden text-muted-foreground sm:inline">History</span>
           </div>
           <Link
             href="/research/new"

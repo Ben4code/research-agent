@@ -1,4 +1,5 @@
 import { log } from '@temporalio/activity';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { mastra } from '../mastra/index.js';
 import { searchWeb } from '../tools/search-adapter.js';
@@ -7,16 +8,57 @@ import {
   researchPlanSchema,
   findingsSchema,
   generatedReportSchema,
+  gapAnalysisSchema,
   type ResearchWorkflowInput,
   type ResearchPlan,
   type Finding,
   type GeneratedReport,
+  type ResearchTask,
+  type GapAnalysis,
+  type ResearchEventType,
 } from '@research-agent/shared';
 
 const MAX_RESULTS_PER_QUERY = 3;
 const MAX_PAGES_PER_STEP = 3;
 
-// ── Phase 7: Full E2E pipeline ──────────────────────────────────────
+// ── Event publishing (Phase 9 — progress events) ────────────────────
+
+async function publishEvent(
+  researchId: string,
+  type: ResearchEventType,
+  opts: { step?: string; message?: string; metadata?: Record<string, unknown> } = {},
+): Promise<void> {
+  try {
+    await prisma.researchEvent.create({
+      data: {
+        researchId,
+        type,
+        step: opts.step,
+        message: opts.message,
+        metadata: opts.metadata as Prisma.InputJsonValue | undefined,
+      },
+    });
+  } catch (error) {
+    log.warn('Failed to publish research event', {
+      researchId,
+      type,
+      error: String(error),
+    });
+  }
+}
+
+function tokensUsed(response: {
+  totalUsage?: { totalTokens?: number };
+  usage?: { totalTokens?: number };
+}): number {
+  return (
+    response.totalUsage?.totalTokens ??
+    response.usage?.totalTokens ??
+    0
+  );
+}
+
+// ── Phase 8: Iterative research with gap detection ─────────────────
 
 export async function initializeResearch(
   input: ResearchWorkflowInput,
@@ -28,11 +70,16 @@ export async function initializeResearch(
     where: { id: researchId },
     data: { status: 'planning' },
   });
+
+  await publishEvent(researchId, 'research.started', {
+    step: 'initialized',
+    message: 'Research workflow started',
+  });
 }
 
 export async function createResearchPlan(
   input: ResearchWorkflowInput,
-): Promise<ResearchPlan> {
+): Promise<{ plan: ResearchPlan; tokensUsed: number }> {
   const { researchId, question, instructions } = input;
   log.info('Creating research plan', { researchId, question });
 
@@ -53,13 +100,24 @@ export async function createResearchPlan(
     stepCount: plan.steps.length,
   });
 
-  return plan;
+  await publishEvent(researchId, 'research.planning', {
+    step: 'planning',
+    message: `Planning complete — ${plan.steps.length} research steps`,
+    metadata: {
+      topic: plan.topic,
+      stepCount: plan.steps.length,
+      steps: plan.steps.map((s) => s.description),
+    },
+  });
+
+  return { plan, tokensUsed: tokensUsed(response) };
 }
 
 export async function performResearch(
   input: ResearchWorkflowInput,
-  plan: ResearchPlan,
-): Promise<Finding[]> {
+  tasks: ResearchTask[],
+  maxSources: number,
+): Promise<{ findings: Finding[]; sources: string[]; tokensUsed: number }> {
   const { researchId, question } = input;
 
   await prisma.research.update({
@@ -67,19 +125,41 @@ export async function performResearch(
     data: { status: 'researching' },
   });
 
+  await publishEvent(researchId, 'research.searching', {
+    step: 'searching',
+    message: `Researching ${tasks.length} task${tasks.length !== 1 ? 's' : ''}`,
+    metadata: { taskCount: tasks.length },
+  });
+
   const allFindings: Finding[] = [];
+  const sourceUrls: string[] = [];
+  let totalTokens = 0;
   const agent = mastra.getAgentById('research-agent');
 
-  for (let i = 0; i < plan.steps.length; i++) {
-    const step = plan.steps[i];
-    log.info(`Researching step ${i + 1}/${plan.steps.length}`, {
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
+    if (sourceUrls.length >= maxSources) {
+      log.warn('Source budget reached, stopping research early', {
+        researchId,
+        maxSources,
+      });
+      break;
+    }
+
+    log.info(`Researching task ${i + 1}/${tasks.length}`, {
       researchId,
-      description: step.description,
+      description: task.description,
     });
 
-    // 1. Search for each query in this step
+    await publishEvent(researchId, 'research.searching', {
+      step: 'searching',
+      message: `Task ${i + 1}/${tasks.length}: ${task.description}`,
+      metadata: { taskIndex: i + 1, taskCount: tasks.length },
+    });
+
+    // 1. Search for each query in this task
     const allSearchResults: { title: string; url: string; snippet: string }[] = [];
-    for (const query of step.searchQueries) {
+    for (const query of task.searchQueries) {
       try {
         const searchResult = await searchWeb({
           query,
@@ -96,8 +176,8 @@ export async function performResearch(
       }
     }
 
-    // Deduplicate URLs
-    const seenUrls = new Set<string>();
+    // Deduplicate URLs (also skipping ones already used as sources)
+    const seenUrls = new Set<string>(sourceUrls);
     const uniqueResults = allSearchResults.filter((r) => {
       if (seenUrls.has(r.url)) return false;
       seenUrls.add(r.url);
@@ -106,7 +186,8 @@ export async function performResearch(
 
     // 2. Fetch top pages
     const pages: { url: string; title: string; content: string }[] = [];
-    const pagesToFetch = uniqueResults.slice(0, MAX_PAGES_PER_STEP);
+    const remainingBudget = maxSources - sourceUrls.length;
+    const pagesToFetch = uniqueResults.slice(0, Math.min(MAX_PAGES_PER_STEP, remainingBudget));
 
     for (const result of pagesToFetch) {
       try {
@@ -125,7 +206,7 @@ export async function performResearch(
     }
 
     if (pages.length === 0) {
-      log.warn(`No pages fetched for step ${i + 1}`, { researchId });
+      log.warn(`No pages fetched for task ${i + 1}`, { researchId });
       continue;
     }
 
@@ -139,9 +220,9 @@ export async function performResearch(
 
     const extractPrompt = `You are researching: "${question}"
 
-Research step: ${step.description}
+Research task: ${task.description}
 
-Here are the contents of ${pages.length} web pages found for this step:
+Here are the contents of ${pages.length} web pages found for this task:
 
 ${pageContents}
 
@@ -157,16 +238,25 @@ Only include findings that are directly relevant. Be factual — do not make up 
       const extractResponse = await agent.generate(extractPrompt, {
         structuredOutput: { schema: findingsSchema },
       });
+      totalTokens += tokensUsed(extractResponse);
 
       const stepFindings = extractResponse.object.findings;
       log.info(`Findings extracted`, {
         researchId,
-        step: i + 1,
+        task: i + 1,
         findingCount: stepFindings.length,
       });
 
       // 4. Persist each finding
       for (const finding of stepFindings) {
+        if (sourceUrls.length >= maxSources) {
+          log.warn('Source budget reached during persistence', {
+            researchId,
+            maxSources,
+          });
+          break;
+        }
+
         let source = await prisma.source.findFirst({
           where: { researchId, url: finding.sourceUrl },
         });
@@ -178,6 +268,17 @@ Only include findings that are directly relevant. Be factual — do not make up 
               url: finding.sourceUrl,
               title: finding.sourceTitle,
               snippet: finding.claim.slice(0, 500),
+            },
+          });
+          sourceUrls.push(finding.sourceUrl);
+
+          await publishEvent(researchId, 'research.source_found', {
+            step: 'source_found',
+            message: `Source found: ${finding.sourceTitle}`,
+            metadata: {
+              url: finding.sourceUrl,
+              title: finding.sourceTitle,
+              sourceCount: sourceUrls.length,
             },
           });
         }
@@ -195,7 +296,7 @@ Only include findings that are directly relevant. Be factual — do not make up 
         allFindings.push(finding);
       }
     } catch (error) {
-      log.error(`Finding extraction failed for step ${i + 1}`, {
+      log.error(`Finding extraction failed for task ${i + 1}`, {
         researchId,
         error: String(error),
       });
@@ -207,22 +308,118 @@ Only include findings that are directly relevant. Be factual — do not make up 
     data: { status: 'analyzing' },
   });
 
+  await publishEvent(researchId, 'research.analyzing', {
+    step: 'analyzing',
+    message: `Analyzing ${allFindings.length} findings from ${sourceUrls.length} sources`,
+    metadata: {
+      findingCount: allFindings.length,
+      sourceCount: sourceUrls.length,
+    },
+  });
+
   log.info(`Research complete`, {
     researchId,
     totalFindings: allFindings.length,
+    sourceCount: sourceUrls.length,
+    tokensUsed: totalTokens,
   });
 
-  return allFindings;
+  return { findings: allFindings, sources: sourceUrls, tokensUsed: totalTokens };
+}
+
+export async function analyzeGaps(
+  input: ResearchWorkflowInput,
+  findings: Finding[],
+): Promise<{ analysis: GapAnalysis; tokensUsed: number }> {
+  const { researchId, question } = input;
+
+  log.info(`Analyzing findings for gaps`, {
+    researchId,
+    findingCount: findings.length,
+  });
+
+  const findingsText = findings
+    .map(
+      (f, i) =>
+        `### Finding ${i + 1}\n**Claim:** ${f.claim}\n**Source:** [${f.sourceTitle}](${f.sourceUrl})\n${f.evidence ? `**Evidence:** ${f.evidence}\n` : ''}`,
+    )
+    .join('\n\n');
+
+  const prompt = `You are analyzing the completeness of a research investigation.
+
+**Research question:** ${question}
+
+Here are the ${findings.length} findings collected so far:
+
+${findingsText}
+
+Evaluate whether these findings sufficiently answer the research question. Consider:
+- Are all major aspects or subtopics of the question covered?
+- Are there important missing topics, comparisons, or perspectives?
+- Is any critical information missing (e.g., pricing, dates, specifics)?
+- Are there conflicting claims that need resolution?
+
+Completeness criteria:
+- All major subtopics of the question have at least one finding.
+- Each compared option/entity has coverage for features, limitations, and (where relevant) pricing.
+- Key claims are backed by evidence.
+- No major unanswered aspect remains.
+
+If the findings are complete, set isComplete to true and return an empty gaps array.
+Otherwise, identify the most important gaps. For each gap, provide:
+- topic: the missing subject
+- description: what information is missing and why it matters
+- searchQueries: 2-3 specific queries that would find this information
+
+Return only genuine, important gaps (max 3).`;
+
+  const agent = mastra.getAgentById('research-agent');
+
+  const response = await agent.generate(prompt, {
+    structuredOutput: { schema: gapAnalysisSchema },
+  });
+
+  const analysis = response.object;
+  log.info(`Gap analysis complete`, {
+    researchId,
+    isComplete: analysis.isComplete,
+    gapCount: analysis.gaps.length,
+    tokensUsed: tokensUsed(response),
+  });
+
+  if (analysis.isComplete) {
+    await publishEvent(researchId, 'research.analyzing', {
+      step: 'gap_analysis',
+      message: 'Findings are complete — no important gaps',
+      metadata: { isComplete: true, findingCount: findings.length },
+    });
+  } else {
+    await publishEvent(researchId, 'research.gap_detected', {
+      step: 'gap_analysis',
+      message: `${analysis.gaps.length} gap${analysis.gaps.length !== 1 ? 's' : ''} found to research further`,
+      metadata: {
+        gapCount: analysis.gaps.length,
+        gaps: analysis.gaps.map((g) => g.topic),
+      },
+    });
+  }
+
+  return { analysis, tokensUsed: tokensUsed(response) };
 }
 
 export async function generateReport(
   input: ResearchWorkflowInput,
-): Promise<GeneratedReport> {
+): Promise<{ report: GeneratedReport; tokensUsed: number }> {
   const { researchId, question, instructions } = input;
 
   await prisma.research.update({
     where: { id: researchId },
     data: { status: 'generating_report' },
+  });
+
+  await publishEvent(researchId, 'research.generating_report', {
+    step: 'generating_report',
+    message: 'Generating the research report',
   });
 
   const dbFindings = await prisma.finding.findMany({
@@ -296,7 +493,7 @@ The report should be informative, factual, and reference the findings above.`;
     contentLength: fullContent.length,
   });
 
-  return report;
+  return { report, tokensUsed: tokensUsed(response) };
 }
 
 export async function completeResearch(
@@ -311,5 +508,36 @@ export async function completeResearch(
       status: 'completed',
       completedAt: new Date(),
     },
+  });
+
+  await publishEvent(researchId, 'research.completed', {
+    step: 'completed',
+    message: 'Research completed',
+  });
+}
+
+export async function failResearch(
+  input: ResearchWorkflowInput,
+  error: string,
+): Promise<void> {
+  const { researchId } = input;
+  log.error('Failing research', { researchId, error });
+
+  try {
+    await prisma.research.update({
+      where: { id: researchId },
+      data: { status: 'failed' },
+    });
+  } catch (updateError) {
+    log.error('Failed to update research status', {
+      researchId,
+      error: String(updateError),
+    });
+  }
+
+  await publishEvent(researchId, 'research.failed', {
+    step: 'failed',
+    message: `Research failed: ${error.slice(0, 300)}`,
+    metadata: { error: error.slice(0, 1000) },
   });
 }

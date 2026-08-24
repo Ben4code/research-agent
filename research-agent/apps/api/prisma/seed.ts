@@ -69,6 +69,122 @@ async function main() {
     },
   });
 
+  // ── Progress events (Phase 9) ─────────────────────────────────────
+
+  const base = Date.now();
+
+  await prisma.researchEvent.createMany({
+    data: [
+      {
+        researchId: r1.id,
+        type: 'research.started',
+        step: 'initialized',
+        message: 'Research workflow started',
+        timestamp: new Date(base - day * 7),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.planning',
+        step: 'planning',
+        message: 'Planning complete — 5 research steps',
+        metadata: { topic: 'payment processors', stepCount: 5 },
+        timestamp: new Date(base - day * 7 + 1000 * 30),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.searching',
+        step: 'searching',
+        message: 'Researching 5 tasks',
+        metadata: { taskCount: 5 },
+        timestamp: new Date(base - day * 7 + 1000 * 60),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.source_found',
+        step: 'source_found',
+        message: 'Source found: Stripe Pricing',
+        metadata: { url: 'https://stripe.com/pricing', sourceCount: 1 },
+        timestamp: new Date(base - day * 7 + 1000 * 90),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.source_found',
+        step: 'source_found',
+        message: 'Source found: Stripe API Documentation',
+        metadata: { url: 'https://stripe.com/docs/api', sourceCount: 2 },
+        timestamp: new Date(base - day * 7 + 1000 * 120),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.analyzing',
+        step: 'analyzing',
+        message: 'Analyzing 3 findings from 2 sources',
+        metadata: { findingCount: 3, sourceCount: 2 },
+        timestamp: new Date(base - day * 7 + 1000 * 180),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.analyzing',
+        step: 'gap_analysis',
+        message: 'Findings are complete — no important gaps',
+        metadata: { isComplete: true, findingCount: 3 },
+        timestamp: new Date(base - day * 7 + 1000 * 240),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.generating_report',
+        step: 'generating_report',
+        message: 'Generating the research report',
+        timestamp: new Date(base - day * 7 + 1000 * 300),
+      },
+      {
+        researchId: r1.id,
+        type: 'research.completed',
+        step: 'completed',
+        message: 'Research completed',
+        timestamp: new Date(base - day * 6),
+      },
+      {
+        researchId: r3.id,
+        type: 'research.started',
+        step: 'initialized',
+        message: 'Research workflow started',
+        timestamp: new Date(base - 1000 * 60 * 30),
+      },
+      {
+        researchId: r3.id,
+        type: 'research.planning',
+        step: 'planning',
+        message: 'Planning complete — 4 research steps',
+        metadata: { topic: 'react state management', stepCount: 4 },
+        timestamp: new Date(base - 1000 * 60 * 29),
+      },
+      {
+        researchId: r3.id,
+        type: 'research.searching',
+        step: 'searching',
+        message: 'Researching 4 tasks',
+        metadata: { taskCount: 4 },
+        timestamp: new Date(base - 1000 * 60 * 28),
+      },
+      {
+        researchId: r4.id,
+        type: 'research.started',
+        step: 'initialized',
+        message: 'Research workflow started',
+        timestamp: new Date(base - day * 2),
+      },
+      {
+        researchId: r4.id,
+        type: 'research.failed',
+        step: 'failed',
+        message: 'Research failed: TAVILY_API_KEY is not set',
+        metadata: { error: 'TAVILY_API_KEY is not set' },
+        timestamp: new Date(base - day * 2 + 1000 * 30),
+      },
+    ],
+  });
+
   const s1 = await prisma.source.create({
     data: {
       researchId: r1.id,
@@ -257,6 +373,7 @@ For applications requiring durable, long-running workflows with complex orchestr
   console.log(`  User: ${user.email}`);
   console.log(`  Research: 4 projects (2 completed, 1 researching, 1 failed)`);
   console.log(`  Sources: 6, Findings: 3, Reports: 2`);
+  console.log(`  Events: 14`);
 }
 
 main()

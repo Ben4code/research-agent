@@ -1,7 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { TemporalService } from '../temporal/temporal.service';
 import { type CreateResearchRequest } from '@research-agent/shared';
+
+const TERMINAL_STATUSES = new Set(['completed', 'failed']);
 
 @Injectable()
 export class ResearchService {
@@ -106,5 +109,90 @@ export class ResearchService {
     }
 
     return research;
+  }
+
+  /**
+   * Streams stored research events over SSE. Polls the database for new
+   * events (no external pub/sub needed) and completes when the research
+   * reaches a terminal status and all events have been delivered.
+   */
+  streamEvents(
+    userId: string,
+    id: string,
+  ): Observable<{ data: unknown; id?: string; type?: string }> {
+    return new Observable((subscriber) => {
+      let lastSequence = 0;
+      let closed = false;
+
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        clearInterval(timer);
+        subscriber.complete();
+      };
+
+      const poll = async () => {
+        try {
+          const research = await this.prisma.research.findFirst({
+            where: { id, userId },
+            select: { id: true, status: true },
+          });
+
+          if (!research) {
+            subscriber.error(new NotFoundException(`Research ${id} not found`));
+            close();
+            return;
+          }
+
+          const events = await this.prisma.researchEvent.findMany({
+            where: {
+              researchId: id,
+              sequence: { gt: lastSequence },
+            },
+            orderBy: { sequence: 'asc' },
+          });
+
+          for (const event of events) {
+            lastSequence = event.sequence;
+            subscriber.next({
+              id: event.id,
+              type: event.type,
+              data: {
+                id: event.id,
+                type: event.type,
+                researchId: event.researchId,
+                step: event.step ?? undefined,
+                message: event.message ?? undefined,
+                metadata: event.metadata ?? undefined,
+                timestamp: event.timestamp.toISOString(),
+              },
+            });
+          }
+
+          // Once the workflow is done and everything has been delivered, end the stream.
+          if (TERMINAL_STATUSES.has(research.status)) {
+            this.logger.log(
+              `Ending event stream for research ${id} (${research.status})`,
+            );
+            close();
+          }
+        } catch (error) {
+          this.logger.error(
+            `Event stream poll failed for research ${id}`,
+            error,
+          );
+          subscriber.error(error);
+          close();
+        }
+      };
+
+      // First poll immediately, then poll on an interval.
+      void poll();
+      const timer = setInterval(() => void poll(), 1000);
+
+      return () => {
+        clearInterval(timer);
+      };
+    });
   }
 }

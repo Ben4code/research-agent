@@ -1,7 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ResearchResponseDocDto {
-  @ApiProperty({ description: 'Unique research identifier', example: 'cmt4fnrm40001zv5xags8q27q' })
+  @ApiProperty({
+    description: 'Unique research identifier',
+    example: 'cmt4fnrm40001zv5xags8q27q',
+  })
   id!: string;
 
   @ApiProperty({
@@ -31,7 +34,10 @@ export class ResearchRecordDocDto {
   @ApiProperty({ description: 'The research question' })
   question!: string;
 
-  @ApiPropertyOptional({ description: 'Optional additional instructions', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Optional additional instructions',
+    nullable: true,
+  })
   instructions?: string | null;
 
   @ApiProperty({
@@ -52,10 +58,16 @@ export class ResearchRecordDocDto {
   @ApiPropertyOptional({ description: 'Temporal workflow ID', nullable: true })
   workflowId?: string | null;
 
-  @ApiProperty({ description: 'Creation timestamp (ISO 8601)', example: '2026-08-22T13:47:45.676Z' })
+  @ApiProperty({
+    description: 'Creation timestamp (ISO 8601)',
+    example: '2026-08-22T13:47:45.676Z',
+  })
   createdAt!: string;
 
-  @ApiPropertyOptional({ description: 'Completion timestamp (ISO 8601)', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Completion timestamp (ISO 8601)',
+    nullable: true,
+  })
   completedAt?: string | null;
 }
 
@@ -77,7 +89,10 @@ export class SourceDocDto {
   @ApiProperty({ description: 'Research ID this source belongs to' })
   researchId!: string;
 
-  @ApiProperty({ description: 'Source URL', example: 'https://stripe.com/pricing' })
+  @ApiProperty({
+    description: 'Source URL',
+    example: 'https://stripe.com/pricing',
+  })
   url!: string;
 
   @ApiProperty({ description: 'Source title', example: 'Stripe Pricing' })
@@ -86,7 +101,10 @@ export class SourceDocDto {
   @ApiPropertyOptional({ description: 'Full page content', nullable: true })
   content?: string | null;
 
-  @ApiPropertyOptional({ description: 'Short snippet from the source', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Short snippet from the source',
+    nullable: true,
+  })
   snippet?: string | null;
 
   @ApiProperty({ description: 'When the source was retrieved (ISO 8601)' })
@@ -103,10 +121,15 @@ export class FindingDocDto {
   @ApiProperty({ description: 'Source ID this finding was extracted from' })
   sourceId!: string;
 
-  @ApiProperty({ description: 'The claim or finding extracted from the source' })
+  @ApiProperty({
+    description: 'The claim or finding extracted from the source',
+  })
   claim!: string;
 
-  @ApiPropertyOptional({ description: 'Supporting evidence for the claim', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Supporting evidence for the claim',
+    nullable: true,
+  })
   evidence?: string | null;
 
   @ApiPropertyOptional({
@@ -155,7 +178,10 @@ export class ResearchDetailDocDto {
   @ApiProperty({ description: 'The research question' })
   question!: string;
 
-  @ApiPropertyOptional({ description: 'Additional instructions', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Additional instructions',
+    nullable: true,
+  })
   instructions?: string | null;
 
   @ApiProperty({
@@ -179,16 +205,28 @@ export class ResearchDetailDocDto {
   @ApiProperty({ description: 'Creation timestamp (ISO 8601)' })
   createdAt!: string;
 
-  @ApiPropertyOptional({ description: 'Completion timestamp (ISO 8601)', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Completion timestamp (ISO 8601)',
+    nullable: true,
+  })
   completedAt?: string | null;
 
-  @ApiProperty({ description: 'Sources collected during research', type: [SourceDocDto] })
+  @ApiProperty({
+    description: 'Sources collected during research',
+    type: [SourceDocDto],
+  })
   sources!: SourceDocDto[];
 
-  @ApiProperty({ description: 'Findings extracted during research', type: [FindingDocDto] })
+  @ApiProperty({
+    description: 'Findings extracted during research',
+    type: [FindingDocDto],
+  })
   findings!: FindingDocDto[];
 
-  @ApiProperty({ description: 'Reports generated for this research', type: [ReportDocDto] })
+  @ApiProperty({
+    description: 'Reports generated for this research',
+    type: [ReportDocDto],
+  })
   reports!: ReportDocDto[];
 }
 
@@ -199,7 +237,10 @@ export class HealthResponseDocDto {
   @ApiProperty({ description: 'Service name', example: 'research-agent-api' })
   service!: string;
 
-  @ApiProperty({ description: 'Current timestamp (ISO 8601)', example: '2026-08-22T13:47:45.676Z' })
+  @ApiProperty({
+    description: 'Current timestamp (ISO 8601)',
+    example: '2026-08-22T13:47:45.676Z',
+  })
   timestamp!: string;
 }
 
