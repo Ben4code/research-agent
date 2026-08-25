@@ -111,6 +111,46 @@ export class ResearchService {
     return research;
   }
 
+  async remove(userId: string, id: string) {
+    const research = await this.prisma.research.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+
+    if (!research) {
+      throw new NotFoundException(`Research ${id} not found`);
+    }
+
+    // Deleting the research cascades to its events, sources, findings, and
+    // reports via the database-level ON DELETE CASCADE relations.
+    await this.prisma.research.delete({
+      where: { id: research.id },
+    });
+
+    return { id: research.id };
+  }
+
+  async removeReport(userId: string, researchId: string, reportId: string) {
+    const research = await this.prisma.research.findFirst({
+      where: { id: researchId, userId },
+      select: { id: true },
+    });
+
+    if (!research) {
+      throw new NotFoundException(`Research ${researchId} not found`);
+    }
+
+    const result = await this.prisma.report.deleteMany({
+      where: { id: reportId, researchId },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException(`Report ${reportId} not found`);
+    }
+
+    return { id: reportId };
+  }
+
   /**
    * Streams stored research events over SSE. Polls the database for new
    * events (no external pub/sub needed) and completes when the research

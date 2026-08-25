@@ -3,8 +3,17 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ExternalLink, FileText, Link2, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  ExternalLink,
+  FileText,
+  Link2,
+  Loader2,
+  Target,
+  Trash2,
+} from 'lucide-react';
 
 interface Source {
   id: string;
@@ -33,6 +42,7 @@ interface StatsTabsProps {
   findings: Finding[];
   reports: Report[];
   status: string;
+  researchId: string;
 }
 
 type Metric = 'findings' | 'reports' | 'sources';
@@ -53,7 +63,15 @@ const confidenceStyles: Record<string, string> = {
   low: 'bg-muted text-muted-foreground',
 };
 
-export function StatsTabs({ sources, findings, reports, status }: StatsTabsProps) {
+export function StatsTabs({
+  sources,
+  findings,
+  reports: initialReports,
+  status,
+  researchId,
+}: StatsTabsProps) {
+  const [reports, setReports] = useState<Report[]>(initialReports);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const values: Record<Metric, number> = {
     reports: reports.length,
     findings: findings.length,
@@ -62,6 +80,37 @@ export function StatsTabs({ sources, findings, reports, status }: StatsTabsProps
   const [active, setActive] = useState<Metric>(
     reports.length > 0 ? 'reports' : 'sources',
   );
+
+  async function handleDeleteReport(report: Report) {
+    const confirmed = window.confirm(
+      `Delete report "${report.title}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+    setDeletingId(report.id);
+
+    try {
+      const res = await fetch(
+        `${apiUrl}/api/research/${researchId}/reports/${report.id}`,
+        { method: 'DELETE' },
+      );
+
+      if (!res.ok) {
+        throw new Error('Failed to delete report');
+      }
+
+      setReports((prev) => prev.filter((r) => r.id !== report.id));
+      toast.success('Report deleted');
+    } catch (error) {
+      toast.error('Could not delete report. Please try again.');
+      console.error(error);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="mb-10">
@@ -112,7 +161,12 @@ export function StatsTabs({ sources, findings, reports, status }: StatsTabsProps
         className="mt-3 w-full max-w-5xl rounded-2xl border border-calcite-light bg-card p-6 animate-in fade-in-0 duration-200"
       >
         {active === 'reports' && (
-          <ReportsPanel reports={reports} status={status} />
+          <ReportsPanel
+            reports={reports}
+            status={status}
+            deletingId={deletingId}
+            onDelete={handleDeleteReport}
+          />
         )}
         {active === 'sources' && <SourcesPanel sources={sources} />}
         {active === 'findings' && <FindingsPanel findings={findings} />}
@@ -121,7 +175,17 @@ export function StatsTabs({ sources, findings, reports, status }: StatsTabsProps
   );
 }
 
-function ReportsPanel({ reports, status }: { reports: Report[]; status: string }) {
+function ReportsPanel({
+  reports,
+  status,
+  deletingId,
+  onDelete,
+}: {
+  reports: Report[];
+  status: string;
+  deletingId: string | null;
+  onDelete: (report: Report) => void;
+}) {
   if (reports.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-14 text-center">
@@ -143,11 +207,32 @@ function ReportsPanel({ reports, status }: { reports: Report[]; status: string }
     <div className="flex flex-col gap-8">
       {reports.map((report) => (
         <div key={report.id} className="flex flex-col gap-2">
-          {reports.length > 1 && report.title && (
-            <h3 className="text-base font-bold tracking-[-0.01em] text-foreground">
-              {report.title}
-            </h3>
-          )}
+          <div className="flex items-center justify-between gap-2">
+            {report.title ? (
+              <h3 className="text-base font-bold tracking-[-0.01em] text-foreground">
+                {report.title}
+              </h3>
+            ) : (
+              <span className="text-base font-bold tracking-[-0.01em] text-foreground">
+                Report
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Delete report "${report.title}"`}
+              disabled={deletingId === report.id}
+              onClick={() => onDelete(report)}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              {deletingId === report.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
           <article className="prose-calcite dark:prose-invert max-w-none rounded-xl border border-calcite-light bg-background p-8">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {report.content}

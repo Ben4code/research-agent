@@ -161,6 +161,7 @@ export default async function ResearchDetailPage({
         {/* Tabbed content: Sources / Findings / Reports */}
         <StatsTabs
           status={research.status}
+          researchId={research.id}
           reports={research.reports}
           findings={research.findings}
           sources={research.sources}

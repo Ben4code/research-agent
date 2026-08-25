@@ -15,6 +15,7 @@ describe('Research API (e2e)', () => {
       findMany: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     researchEvent: {
       findMany: vi.fn(),
@@ -30,6 +31,7 @@ describe('Research API (e2e)', () => {
     },
     report: {
       create: vi.fn(),
+      deleteMany: vi.fn(),
     },
     $connect: vi.fn(),
     $disconnect: vi.fn(),
@@ -433,6 +435,80 @@ describe('Research API (e2e)', () => {
 
         expect(response.body).toBeDefined();
       });
+    });
+  });
+
+  describe('DELETE /api/research/:id', () => {
+    it('should delete a research project', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue({ id: 'r1' });
+      mockPrisma.research.delete.mockResolvedValue({ id: 'r1' });
+
+      const response = await request(app.getHttpServer())
+        .delete('/api/research/r1')
+        .expect(200);
+
+      expect(response.body).toEqual({ id: 'r1' });
+
+      expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
+        where: { id: 'r1', userId: 'demo-user-id' },
+        select: { id: true },
+      });
+      expect(mockPrisma.research.delete).toHaveBeenCalledWith({
+        where: { id: 'r1' },
+      });
+    });
+
+    it('should return 404 when research not found', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue(null);
+
+      const response = await request(app.getHttpServer())
+        .delete('/api/research/nonexistent')
+        .expect(404);
+
+      expect(response.body).toBeDefined();
+      expect(mockPrisma.research.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('DELETE /api/research/:id/reports/:reportId', () => {
+    it('should delete a single report', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue({ id: 'r1' });
+      mockPrisma.report.deleteMany.mockResolvedValue({ count: 1 });
+
+      const response = await request(app.getHttpServer())
+        .delete('/api/research/r1/reports/rep1')
+        .expect(200);
+
+      expect(response.body).toEqual({ id: 'rep1' });
+
+      expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
+        where: { id: 'r1', userId: 'demo-user-id' },
+        select: { id: true },
+      });
+      expect(mockPrisma.report.deleteMany).toHaveBeenCalledWith({
+        where: { id: 'rep1', researchId: 'r1' },
+      });
+    });
+
+    it('should return 404 when research not found', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .delete('/api/research/nonexistent/reports/rep1')
+        .expect(404);
+
+      expect(mockPrisma.report.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 when report not found', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue({ id: 'r1' });
+      mockPrisma.report.deleteMany.mockResolvedValue({ count: 0 });
+
+      const response = await request(app.getHttpServer())
+        .delete('/api/research/r1/reports/rep1')
+        .expect(404);
+
+      expect(response.body).toBeDefined();
     });
   });
 });

@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Sse,
@@ -26,6 +29,7 @@ import {
   ResearchResponseDocDto,
   ResearchListResponseDocDto,
   ResearchDetailDocDto,
+  DeleteResearchResponseDocDto,
   ValidationErrorDocDto,
 } from './dto/research-doc.dto';
 
@@ -124,5 +128,60 @@ export class ResearchController {
   })
   findOne(@Param('id') id: string) {
     return this.researchService.findOne(DEMO_USER_ID, id);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Delete a research project',
+    description:
+      'Deletes a research project and cascades the deletion to its associated sources, findings, reports, and events.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Research ID',
+    example: 'cmt4fnrm40001zv5xags8q27q',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Research deleted',
+    type: DeleteResearchResponseDocDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Research not found',
+  })
+  remove(@Param('id') id: string) {
+    return this.researchService.remove(DEMO_USER_ID, id);
+  }
+
+  @Delete(':id/reports/:reportId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Delete a single report',
+    description:
+      'Deletes a specific report belonging to a research project. Does not affect the research, sources, or findings.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Research ID',
+    example: 'cmt4fnrm40001zv5xags8q27q',
+  })
+  @ApiParam({
+    name: 'reportId',
+    description: 'Report ID',
+    example: 'cmt4fnrm40002zv5xags8q27q',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Report deleted',
+    type: DeleteResearchResponseDocDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Research or report not found',
+  })
+  removeReport(@Param('id') id: string, @Param('reportId') reportId: string) {
+    return this.researchService.removeReport(DEMO_USER_ID, id, reportId);
   }
 }

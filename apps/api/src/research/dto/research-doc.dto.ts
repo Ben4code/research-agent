@@ -244,6 +244,14 @@ export class HealthResponseDocDto {
   timestamp!: string;
 }
 
+export class DeleteResearchResponseDocDto {
+  @ApiProperty({
+    description: 'ID of the deleted research',
+    example: 'cmt4fnrm40001zv5xags8q27q',
+  })
+  id!: string;
+}
+
 export class ValidationErrorDocDto {
   @ApiProperty({ description: 'Error message', example: 'Validation failed' })
   message!: string;
