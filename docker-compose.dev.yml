@@ -1,11 +1,30 @@
-# Temporal for Coolify (self-hosted option).
-# Add this as a "Docker Compose" resource in Coolify, pointing at this file.
-# Set TEMPORAL_ADDRESS on `api` and `worker` to your server IP / domain + 7233
-# (e.g. 203.0.113.10:7233 or temporal.example.com:7233) once the proxy is in front.
+# Local development infrastructure only (PostgreSQL + Temporal).
+# Used by `pnpm db:up` / `pnpm db:down`. Apps run via `pnpm dev`.
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: research-agent-postgres
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: research
+      POSTGRES_PASSWORD: research
+      POSTGRES_DB: research_agent
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U research -d research_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   temporal-postgres:
     image: postgres:17-alpine
+    container_name: research-agent-temporal-postgres
     restart: unless-stopped
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: temporal
       POSTGRES_PASSWORD: temporal
@@ -20,6 +39,7 @@ services:
 
   temporal:
     image: temporalio/auto-setup:1.25
+    container_name: research-agent-temporal
     restart: unless-stopped
     ports:
       - "7233:7233"
@@ -41,13 +61,16 @@ services:
 
   temporal-ui:
     image: temporalio/ui:latest
+    container_name: research-agent-temporal-ui
     restart: unless-stopped
     ports:
       - "8233:8080"
     environment:
       TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:3000
     depends_on:
       - temporal
 
 volumes:
+  postgres_data:
   temporal_postgres_data:

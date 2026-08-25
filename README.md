@@ -81,7 +81,8 @@ research-agent/
 │   └── worker/     # Temporal Worker (workflows + activities)
 ├── packages/
 │   └── shared/     # Shared types, enums, DTOs
-├── docker-compose.yml
+├── docker-compose.yml        # Production stack (Coolify)
+├── docker-compose.dev.yml    # Local dev infrastructure (pnpm db:up)
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
 ```
