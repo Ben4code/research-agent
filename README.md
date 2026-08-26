@@ -81,8 +81,8 @@ research-agent/
 │   └── worker/     # Temporal Worker (workflows + activities)
 ├── packages/
 │   └── shared/     # Shared types, enums, DTOs
-├── docker-compose.yml        # Production stack (Coolify)
-├── docker-compose.dev.yml    # Local dev infrastructure (pnpm db:up)
+├── docker-compose.temporal.yml # Temporal stack (deployed as its own Coolify resource)
+├── docker-compose.dev.yml      # Local dev infrastructure (pnpm db:up)
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
 ```
@@ -92,6 +92,15 @@ research-agent/
 > **Mastra decides what to do. Temporal makes sure it gets done reliably.**
 
 See `PRD.md` and `Plan.md` in the parent directory for the full product requirements and implementation plan.
+
+## Deployment (Coolify)
+
+Production deploys use **one Coolify resource per app**, each built from its
+own Dockerfile (`apps/*/Dockerfile`, build context = repo root), plus a
+one-click PostgreSQL database and a separate Docker Compose resource for
+Temporal (`docker-compose.temporal.yml`).
+
+Full step-by-step guide: [`docs/COOLIFY.md`](docs/COOLIFY.md).
 
 ## Useful Commands
 

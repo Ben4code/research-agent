@@ -1,0 +1,72 @@
+# Temporal infrastructure stack — deployed as its OWN Coolify resource.
+#
+# The apps (web/api/worker) are deployed independently with the Dockerfile
+# build pack; this stack only runs Temporal Server + its Postgres + the UI.
+#
+# Coolify setup:
+#   Resource Type:       Docker Compose (from this Git repo)
+#   Base Directory:      /
+#   Compose Location:    /docker-compose.temporal.yml
+#   Domain (temporal-ui service):  https://temporal.celeboty.com:8080
+#
+# IMPORTANT — cross-resource networking:
+#   Each Coolify compose stack gets an isolated network. So api/worker can
+#   reach Temporal, enable "Connect to Predefined Network" on this stack's
+#   "Service Stack" page, then point api/worker at the FULL container name:
+#       TEMPORAL_ADDRESS=temporal-<this-stack's-resource-uuid>:7233
+#   (the uuid is in the stack's Coolify URL; `docker ps` on the server shows
+#   the final container names too)
+#
+# Notes:
+#   - No custom `networks:` and no `container_name:` here — Coolify manages
+#     both. Within the stack, plain service names (e.g. `temporal:7233`)
+#     resolve fine.
+#   - temporal-postgres is internal-only (nothing public is exposed).
+#   - TEMPORAL_POSTGRES_PASSWORD is editable in the stack's Environment
+#     Variables page (default: temporal).
+
+services:
+  temporal-postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:-temporal}
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal -d temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:1.25
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: ${TEMPORAL_POSTGRES_PASSWORD:-temporal}
+      POSTGRES_SEEDS: temporal-postgres
+      DBNAME: temporal
+      VISIBILITY_DBNAME: temporal_visibility
+      TEMPORAL_ADDRESS: temporal:7233
+      DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/config/dynamicconfig/development.yaml
+    depends_on:
+      temporal-postgres:
+        condition: service_healthy
+    volumes:
+      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    depends_on:
+      - temporal
+
+volumes:
+  temporal_postgres_data:

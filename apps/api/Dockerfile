@@ -37,4 +37,6 @@ COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 
 WORKDIR /app/apps/api
 EXPOSE 3001
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=40s \
+  CMD node -e "fetch('http://localhost:'+(process.env.PORT||3001)+'/api/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"
 CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node dist/src/main.js"]
