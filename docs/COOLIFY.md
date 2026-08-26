@@ -35,8 +35,15 @@ to each other over Coolify's shared Docker network.
 2. Deploy it once, then on the stack's **Service Stack** page enable
    **Connect to Predefined Network** (required so api/worker can reach
    Temporal from their own resources) and redeploy.
-3. Set the domain on the `temporal-ui` service:
+3. Set the domain on the **`temporal-ui`** service:
    `https://temporal.celeboty.com:8080`.
+
+   ⚠️ Do **not** set any domain on the `temporal` service — it only serves
+   gRPC on 7233 and has no listener on 8080. If the domain ends up there,
+   the proxy routes into a dead port and the site shows
+   "No Available Server" / 504 while all containers look healthy. (You can
+   verify in the generated compose: the Traefik `loadbalancer.server.port=8080`
+   labels must be on `temporal-ui`, not `temporal`.)
 4. Note the stack's **resource UUID** (in its Coolify URL). Cross-resource
    DNS uses the full container name, so the Temporal address for api/worker is:
 
@@ -120,4 +127,10 @@ everything. Set **Watch Paths** (Configuration → Advanced) on each resource:
   resolve *within* a stack.
 - If a domain shows "No Available Server", check `docker ps` on the server —
   the container is unhealthy or still starting (the api image runs
-  `prisma migrate deploy` before listening, so give it ~30s).
+  `prisma migrate deploy` before listening, so give it ~30s). For the
+  temporal stack, first check the domain isn't on the `temporal` service
+  instead of `temporal-ui` (see step 2 above).
+- If `api`/`worker` can't reach Temporal (`temporal-<uuid>:7233` connection
+  refused/timeouts), the temporal stack is missing **Connect to Predefined
+  Network** — its generated compose will show only the `<uuid>` network and
+  no `coolify` network.

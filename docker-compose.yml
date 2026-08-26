@@ -1,0 +1,166 @@
+services:
+  temporal-postgres:
+    image: "postgres:17-alpine"
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: "${TEMPORAL_POSTGRES_PASSWORD:-temporal}"
+      POSTGRES_DB: temporal
+      TEMPORAL_POSTGRES_PASSWORD: temporal
+      COOLIFY_BRANCH: '"feat/coolify-config-v3"'
+      COOLIFY_RESOURCE_UUID: 9gjtv9dllkc0q3mitvjzyyo7
+      COOLIFY_CONTAINER_NAME: temporal-postgres-9gjtv9dllkc0q3mitvjzyyo7-004421777322
+      SERVICE_URL_TEMPORAL: "https://temporal.celeboty.com"
+      SERVICE_FQDN_TEMPORAL: temporal.celeboty.com
+      SERVICE_NAME_TEMPORAL_POSTGRES: temporal-postgres
+      SERVICE_NAME_TEMPORAL: temporal
+      SERVICE_NAME_TEMPORAL_UI: temporal-ui
+    volumes:
+      - "9gjtv9dllkc0q3mitvjzyyo7_temporal-postgres-data:/var/lib/postgresql/data"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "pg_isready -U temporal -d temporal"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: temporal-postgres-9gjtv9dllkc0q3mitvjzyyo7-004421777322
+    labels:
+      - coolify.managed=true
+      - coolify.version=4.3.10
+      - coolify.applicationId=7
+      - coolify.type=application
+      - coolify.name=temporal-postgres-9gjtv9dllkc0q3mitvjzyyo7-004421777322
+      - coolify.resourceName=research-agentfeatcoolify-config-v3-9gjtv9dllkc0q3mitvjzyyo7
+      - coolify.projectName=root-project
+      - coolify.serviceName=research-agentfeatcoolify-config-v3-9gjtv9dllkc0q3mitvjzyyo7
+      - coolify.environmentName=production
+      - coolify.pullRequestId=0
+    networks:
+      9gjtv9dllkc0q3mitvjzyyo7: null
+    env_file:
+      - .env
+  temporal:
+    image: "temporalio/auto-setup:1.25"
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: "${TEMPORAL_POSTGRES_PASSWORD:-temporal}"
+      POSTGRES_SEEDS: temporal-postgres
+      DBNAME: temporal
+      VISIBILITY_DBNAME: temporal_visibility
+      TEMPORAL_ADDRESS: "temporal:7233"
+      DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/config/dynamicconfig/development.yaml
+      TEMPORAL_POSTGRES_PASSWORD: temporal
+      COOLIFY_BRANCH: '"feat/coolify-config-v3"'
+      COOLIFY_RESOURCE_UUID: 9gjtv9dllkc0q3mitvjzyyo7
+      COOLIFY_CONTAINER_NAME: temporal-9gjtv9dllkc0q3mitvjzyyo7-004421800383
+      SERVICE_URL_TEMPORAL: "https://temporal.celeboty.com"
+      SERVICE_FQDN_TEMPORAL: temporal.celeboty.com
+      COOLIFY_URL: "https://temporal.celeboty.com,https://www.temporal.celeboty.com"
+      COOLIFY_FQDN: "temporal.celeboty.com,www.temporal.celeboty.com"
+      SERVICE_NAME_TEMPORAL_POSTGRES: temporal-postgres
+      SERVICE_NAME_TEMPORAL: temporal
+      SERVICE_NAME_TEMPORAL_UI: temporal-ui
+    depends_on:
+      temporal-postgres:
+        condition: service_healthy
+    volumes:
+      - "/data/coolify/applications/9gjtv9dllkc0q3mitvjzyyo7/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig"
+    container_name: temporal-9gjtv9dllkc0q3mitvjzyyo7-004421800383
+    labels:
+      - coolify.managed=true
+      - coolify.version=4.3.10
+      - coolify.applicationId=7
+      - coolify.type=application
+      - coolify.name=temporal-9gjtv9dllkc0q3mitvjzyyo7-004421800383
+      - coolify.resourceName=research-agentfeatcoolify-config-v3-9gjtv9dllkc0q3mitvjzyyo7
+      - coolify.projectName=root-project
+      - coolify.serviceName=research-agentfeatcoolify-config-v3-9gjtv9dllkc0q3mitvjzyyo7
+      - coolify.environmentName=production
+      - coolify.pullRequestId=0
+      - traefik.docker.network=9gjtv9dllkc0q3mitvjzyyo7
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.entryPoints=http
+      - traefik.http.routers.http-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.middlewares=redirect-to-https
+      - "traefik.http.routers.http-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.rule=Host(`temporal.celeboty.com`) && PathPrefix(`/`)"
+      - traefik.http.routers.http-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.service=http-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62
+      - traefik.http.routers.http-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.entryPoints=http
+      - traefik.http.routers.http-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.middlewares=redirect-to-https
+      - "traefik.http.routers.http-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.rule=Host(`www.temporal.celeboty.com`) && PathPrefix(`/`)"
+      - traefik.http.routers.http-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.service=http-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62
+      - traefik.http.routers.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.entryPoints=https
+      - traefik.http.routers.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.middlewares=gzip
+      - "traefik.http.routers.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.rule=Host(`temporal.celeboty.com`) && PathPrefix(`/`)"
+      - traefik.http.routers.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.service=https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62
+      - traefik.http.routers.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.tls=true
+      - traefik.http.routers.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.entryPoints=https
+      - traefik.http.routers.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.middlewares=gzip
+      - "traefik.http.routers.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.rule=Host(`www.temporal.celeboty.com`) && PathPrefix(`/`)"
+      - traefik.http.routers.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.service=https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62
+      - traefik.http.routers.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.tls=true
+      - traefik.http.services.http-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.loadbalancer.server.port=8080
+      - traefik.http.services.http-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.loadbalancer.server.port=8080
+      - traefik.http.services.https-0-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.loadbalancer.server.port=8080
+      - traefik.http.services.https-1-9gjtv9dllkc0q3mitvjzyyo7-temporal-ef62.loadbalancer.server.port=8080
+      - "caddy_0.encode=zstd gzip"
+      - "caddy_0.handle_path.0_reverse_proxy={{upstreams 8080}}"
+      - "caddy_0.handle_path=/*"
+      - caddy_0.header=-Server
+      - "caddy_0.try_files={path} /index.html /index.php"
+      - "caddy_0=https://temporal.celeboty.com"
+      - "caddy_1.encode=zstd gzip"
+      - "caddy_1.handle_path.1_reverse_proxy={{upstreams 8080}}"
+      - "caddy_1.handle_path=/*"
+      - caddy_1.header=-Server
+      - "caddy_1.try_files={path} /index.html /index.php"
+      - "caddy_1=https://www.temporal.celeboty.com"
+      - caddy_ingress_network=9gjtv9dllkc0q3mitvjzyyo7
+    networks:
+      9gjtv9dllkc0q3mitvjzyyo7: null
+    env_file:
+      - .env
+  temporal-ui:
+    image: "temporalio/ui:latest"
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: "temporal:7233"
+      COOLIFY_BRANCH: '"feat/coolify-config-v3"'
+      COOLIFY_RESOURCE_UUID: 9gjtv9dllkc0q3mitvjzyyo7
+      COOLIFY_CONTAINER_NAME: temporal-ui-9gjtv9dllkc0q3mitvjzyyo7-004421822183
+      SERVICE_URL_TEMPORAL: "https://temporal.celeboty.com"
+      SERVICE_FQDN_TEMPORAL: temporal.celeboty.com
+      SERVICE_NAME_TEMPORAL_POSTGRES: temporal-postgres
+      SERVICE_NAME_TEMPORAL: temporal
+      SERVICE_NAME_TEMPORAL_UI: temporal-ui
+    depends_on:
+      - temporal
+    container_name: temporal-ui-9gjtv9dllkc0q3mitvjzyyo7-004421822183
+    labels:
+      - coolify.managed=true
+      - coolify.version=4.3.10
+      - coolify.applicationId=7
+      - coolify.type=application
+      - coolify.name=temporal-ui-9gjtv9dllkc0q3mitvjzyyo7-004421822183
+      - coolify.resourceName=research-agentfeatcoolify-config-v3-9gjtv9dllkc0q3mitvjzyyo7
+      - coolify.projectName=root-project
+      - coolify.serviceName=research-agentfeatcoolify-config-v3-9gjtv9dllkc0q3mitvjzyyo7
+      - coolify.environmentName=production
+      - coolify.pullRequestId=0
+    networks:
+      9gjtv9dllkc0q3mitvjzyyo7: null
+    env_file:
+      - .env
+volumes:
+  9gjtv9dllkc0q3mitvjzyyo7_temporal-postgres-data:
+    name: 9gjtv9dllkc0q3mitvjzyyo7_temporal-postgres-data
+networks:
+  9gjtv9dllkc0q3mitvjzyyo7:
+    name: 9gjtv9dllkc0q3mitvjzyyo7
+    external: true

@@ -7,7 +7,13 @@
 #   Resource Type:       Docker Compose (from this Git repo)
 #   Base Directory:      /
 #   Compose Location:    /docker-compose.temporal.yml
-#   Domain (temporal-ui service):  https://temporal.celeboty.com:8080
+#
+# ⚠️  DOMAIN PLACEMENT — the easiest way to break this stack:
+#   Set the public domain ONLY on the temporal-ui service:
+#       https://temporal.celeboty.com:8080   (temporal-ui serves HTTP on 8080)
+#   NEVER set a domain on `temporal` — it only speaks gRPC on 7233 and has no
+#   listener on 8080, so the proxy routes into a dead port and the site shows
+#   "No Available Server" / 504 even though every container looks healthy.
 #
 # IMPORTANT — cross-resource networking:
 #   Each Coolify compose stack gets an isolated network. So api/worker can
@@ -43,6 +49,8 @@ services:
 
   temporal:
     image: temporalio/auto-setup:1.25
+    # INTERNAL ONLY — gRPC frontend on 7233. Do NOT give this service a
+    # domain in Coolify (see warning at the top of this file).
     restart: unless-stopped
     environment:
       DB: postgres12
@@ -62,6 +70,8 @@ services:
 
   temporal-ui:
     image: temporalio/ui:latest
+    # PUBLIC — serves HTTP on 8080. Set the stack's only domain HERE:
+    #   https://temporal.celeboty.com:8080
     restart: unless-stopped
     environment:
       TEMPORAL_ADDRESS: temporal:7233
