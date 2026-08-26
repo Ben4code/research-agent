@@ -134,3 +134,13 @@ everything. Set **Watch Paths** (Configuration → Advanced) on each resource:
   refused/timeouts), the temporal stack is missing **Connect to Predefined
   Network** — its generated compose will show only the `<uuid>` network and
   no `coolify` network.
+- `unable to validate dynamic config ... development.yaml: no such file or
+  directory` — a repo bind mount didn't make it to the server (Docker mounts
+  an empty host dir instead). This is why the temporal stack carries **no
+  repo file mounts**: the only dynamic config we used
+  (`frontend.enableClientRedirection: false`) is the Temporal server default,
+  so the mount and `DYNAMIC_CONFIG_FILE_PATH` were dropped entirely. If you
+  ever need real dynamic config (or any file mount) on Coolify, use its
+  `content:` bind extension to inline the file rather than referencing a
+  repo path. (Local dev keeps using `temporal/dynamicconfig/` via
+  `docker-compose.dev.yml`, where the mount is reliable.)
