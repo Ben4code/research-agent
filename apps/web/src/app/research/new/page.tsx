@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
+import { RequireAuth } from '@/components/auth/require-auth';
+import { UserNav } from '@/components/auth/user-nav';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 
-export default function NewResearchPage() {
+function NewResearchForm() {
   const router = useRouter();
   const [question, setQuestion] = useState('');
   const [instructions, setInstructions] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,22 +25,14 @@ export default function NewResearchPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${apiUrl}/api/research`, {
+      const data = await apiFetch<{ id: string }>('/research', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: question.trim(),
           instructions: instructions.trim() || undefined,
         }),
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        const msg = body?.errors?.[0]?.message ?? 'Failed to start research';
-        throw new Error(msg);
-      }
-
-      const data = await res.json();
       router.push(`/research/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -55,9 +48,12 @@ export default function NewResearchPage() {
             <ArrowLeft className="h-4 w-4" />
             Back to History
           </Link>
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <UserNav />
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -142,5 +138,13 @@ export default function NewResearchPage() {
         </form>
       </main>
     </div>
+  );
+}
+
+export default function NewResearchPage() {
+  return (
+    <RequireAuth>
+      <NewResearchForm />
+    </RequireAuth>
   );
 }

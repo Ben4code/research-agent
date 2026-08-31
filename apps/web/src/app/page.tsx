@@ -333,7 +333,7 @@ export default function Home() {
           </Link>
           <div className="mt-6 flex items-center gap-2 text-sm text-calcite-light/70">
             <CheckCircle2 className="h-4 w-4 text-calcite-orange" />
-            Free to use · No signup required
+            Free to use · Sign up in seconds
           </div>
         </div>
       </section>

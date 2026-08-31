@@ -1,0 +1,85 @@
+# Temporal infrastructure stack — deployed as its OWN Coolify resource.
+#
+# The apps (web/api/worker) are deployed independently with the Dockerfile
+# build pack; this stack only runs Temporal Server + its Postgres + the UI.
+#
+# Coolify setup:
+#   Resource Type:       Docker Compose (from this Git repo)
+#   Base Directory:      /
+#   Compose Location:    /docker-compose.temporal.yml
+#
+# ⚠️  DOMAIN PLACEMENT — the easiest way to break this stack:
+#   Set the public domain ONLY on the temporal-ui service:
+#       https://temporal.celeboty.com:8080   (temporal-ui serves HTTP on 8080)
+#   NEVER set a domain on `temporal` — it only speaks gRPC on 7233 and has no
+#   listener on 8080, so the proxy routes into a dead port and the site shows
+#   "No Available Server" / 504 even though every container looks healthy.
+#
+# IMPORTANT — cross-resource networking:
+#   Each Coolify compose stack gets an isolated network. So api/worker can
+#   reach Temporal, enable "Connect to Predefined Network" on this stack's
+#   "Service Stack" page, then point api/worker at the FULL container name:
+#       TEMPORAL_ADDRESS=temporal-<this-stack's-resource-uuid>:7233
+#   (the uuid is in the stack's Coolify URL; `docker ps` on the server shows
+#   the final container names too)
+#
+# Notes:
+#   - No custom `networks:` and no `container_name:` here — Coolify manages
+#     both. Within the stack, plain service names (e.g. `temporal:7233`)
+#     resolve fine.
+#   - temporal-postgres is internal-only (nothing public is exposed).
+#   - TEMPORAL_POSTGRES_PASSWORD is editable in the stack's Environment
+#     Variables page (default: temporal).
+
+services:
+  temporal-postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:-temporal}
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal -d temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:1.25
+    # INTERNAL ONLY — gRPC frontend on 7233. Do NOT give this service a
+    # domain in Coolify (see warning at the top of this file).
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: ${TEMPORAL_POSTGRES_PASSWORD:-temporal}
+      POSTGRES_SEEDS: temporal-postgres
+      DBNAME: temporal
+      VISIBILITY_DBNAME: temporal_visibility
+      TEMPORAL_ADDRESS: temporal:7233
+      # No DYNAMIC_CONFIG_FILE_PATH here: our only dynamic config value
+      # (frontend.enableClientRedirection: false) is the server default, and
+      # bind-mounting it from the repo is unreliable on Coolify (if the host
+      # path is missing, Docker mounts an empty dir and Temporal refuses to
+      # boot). If you ever need real dynamic config on Coolify, inline it
+      # with Coolify's `content:` bind extension instead of a repo path.
+    depends_on:
+      temporal-postgres:
+        condition: service_healthy
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    # PUBLIC — serves HTTP on 8080. Set the stack's only domain HERE:
+    #   https://temporal.celeboty.com:8080
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    depends_on:
+      - temporal
+
+volumes:
+  temporal_postgres_data:

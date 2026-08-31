@@ -2,17 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
+import { toNodeHandler } from 'better-auth/node';
 import { AppModule } from './app.module';
+import { AuthService } from './auth/auth.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const authService = app.get(AuthService);
 
-  app.setGlobalPrefix('api');
   app.enableCors({
     origin: configService.get<string>('CORS_ORIGIN', 'http://localhost:3000'),
     credentials: true,
   });
+
+  // Better Auth handles its own raw body, so mount it before Nest's body
+  // parser middleware (registered on app init).
+  app.use('/api/auth', toNodeHandler(authService.auth));
+
+  app.setGlobalPrefix('api');
 
   // ── OpenAPI / Scalar docs ───────────────────────────────────────
   const config = new DocumentBuilder()

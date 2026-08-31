@@ -91,12 +91,49 @@ const eventConfig: Record<
   },
 };
 
+const EVENT_TYPES = [
+  'research.started',
+  'research.planning',
+  'research.searching',
+  'research.source_found',
+  'research.analyzing',
+  'research.gap_detected',
+  'research.generating_report',
+  'research.completed',
+  'research.failed',
+];
+
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   });
+}
+
+function parseSseEvent(block: string) {
+  const lines = block.split('\n');
+  let eventType = 'message';
+  let id: string | undefined;
+  const dataLines: string[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('event:')) {
+      eventType = line.slice(6).trim();
+    } else if (line.startsWith('id:')) {
+      id = line.slice(3).trim();
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trim());
+    }
+  }
+
+  const data = dataLines.join('\n');
+  if (!data) return null;
+  try {
+    return { id, eventType, data: JSON.parse(data) as ProgressEvent };
+  } catch {
+    return null;
+  }
 }
 
 export function ResearchProgress({
@@ -108,65 +145,85 @@ export function ResearchProgress({
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const esRef = useRef<EventSource | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!researchId) return;
 
     const apiUrl =
       process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-    const es = new EventSource(`${apiUrl}/api/research/${researchId}/events`);
-    esRef.current = es;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    es.onopen = () => setConnected(true);
-
-    const handleEvent = (msg: MessageEvent) => {
-      if (!msg.data) return;
-      try {
-        const event: ProgressEvent = JSON.parse(msg.data);
-        setEvents((prev) =>
-          prev.some((e) => e.id === event.id) ? prev : [...prev, event],
-        );
-        setStatus(event.type);
-        if (event.type === 'research.completed' || event.type === 'research.failed') {
-          es.close();
-          router.refresh();
-        }
-      } catch {
-        // ignore malformed frames
+    const handleEvent = (event: ProgressEvent) => {
+      setEvents((prev) =>
+        prev.some((e) => e.id === event.id) ? prev : [...prev, event],
+      );
+      setStatus(event.type);
+      if (
+        event.type === 'research.completed' ||
+        event.type === 'research.failed'
+      ) {
+        controller.abort();
+        router.refresh();
       }
     };
 
-    // The API emits named SSE events (event: research.started), so we attach a
-    // listener per event type rather than relying on the default `message`.
-    const types = [
-      'research.started',
-      'research.planning',
-      'research.searching',
-      'research.source_found',
-      'research.analyzing',
-      'research.gap_detected',
-      'research.generating_report',
-      'research.completed',
-      'research.failed',
-    ];
-    for (const type of types) {
-      es.addEventListener(type, handleEvent);
-    }
-    es.onmessage = handleEvent;
+    async function connect() {
+      try {
+        const res = await fetch(
+          `${apiUrl}/api/research/${researchId}/events`,
+          {
+            credentials: 'include',
+            headers: { Accept: 'text/event-stream' },
+            signal: controller.signal,
+          },
+        );
 
-    es.onerror = () => {
-      // The browser reconnects automatically; surface that we're not connected.
-      setConnected(false);
-    };
+        if (!res.ok || !res.body) {
+          setConnected(false);
+          return;
+        }
+
+        setConnected(true);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const blocks = buffer.split('\n\n');
+          buffer = blocks.pop() ?? '';
+
+          for (const block of blocks) {
+            if (!block.trim()) continue;
+            const parsed = parseSseEvent(block);
+            if (parsed) {
+              const { eventType, data } = parsed;
+              if (
+                EVENT_TYPES.includes(eventType) ||
+                eventType === 'message'
+              ) {
+                handleEvent(data);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') return;
+        setConnected(false);
+      }
+    }
+
+    void connect();
 
     return () => {
-      for (const type of types) {
-        es.removeEventListener(type, handleEvent);
-      }
-      es.onmessage = null;
-      es.close();
-      esRef.current = null;
+      controller.abort();
+      abortRef.current = null;
     };
   }, [researchId, router]);
 

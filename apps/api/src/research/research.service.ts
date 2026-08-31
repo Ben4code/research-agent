@@ -1,10 +1,31 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Observable } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { TemporalService } from '../temporal/temporal.service';
-import { type CreateResearchRequest } from '@research-agent/shared';
+import {
+  type CreateResearchRequest,
+  type Visibility,
+} from '@research-agent/shared';
+import { generateShareToken } from '../common/share-token';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed']);
+
+const RESEARCH_INCLUDE = {
+  sources: {
+    orderBy: { retrievedAt: 'desc' },
+  },
+  findings: {
+    include: {
+      source: {
+        select: { id: true, url: true, title: true },
+      },
+    },
+  },
+  reports: {
+    orderBy: { createdAt: 'desc' },
+  },
+} as const;
 
 @Injectable()
 export class ResearchService {
@@ -13,6 +34,7 @@ export class ResearchService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly temporal: TemporalService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(userId: string, dto: CreateResearchRequest) {
@@ -22,6 +44,8 @@ export class ResearchService {
         question: dto.question,
         instructions: dto.instructions,
         status: 'pending',
+        visibility: 'PUBLIC',
+        shareToken: generateShareToken(),
       },
     });
 
@@ -77,6 +101,8 @@ export class ResearchService {
         instructions: r.instructions,
         status: r.status,
         workflowId: r.workflowId,
+        visibility: r.visibility,
+        shareToken: r.shareToken,
         createdAt: r.createdAt.toISOString(),
         completedAt: r.completedAt?.toISOString() ?? null,
       })),
@@ -84,24 +110,17 @@ export class ResearchService {
     };
   }
 
+  /**
+   * Returns a research project. Authenticated users may view any research
+   * they own (regardless of visibility) or any research that is PUBLIC.
+   */
   async findOne(userId: string, id: string) {
     const research = await this.prisma.research.findFirst({
-      where: { id, userId },
-      include: {
-        sources: {
-          orderBy: { retrievedAt: 'desc' },
-        },
-        findings: {
-          include: {
-            source: {
-              select: { id: true, url: true, title: true },
-            },
-          },
-        },
-        reports: {
-          orderBy: { createdAt: 'desc' },
-        },
+      where: {
+        id,
+        OR: [{ userId }, { visibility: 'PUBLIC' }],
       },
+      include: RESEARCH_INCLUDE,
     });
 
     if (!research) {
@@ -109,6 +128,96 @@ export class ResearchService {
     }
 
     return research;
+  }
+
+  /** Public access by share token — no authentication required. */
+  async findByShareToken(token: string) {
+    const research = await this.prisma.research.findFirst({
+      where: { shareToken: token, visibility: 'PUBLIC' },
+      include: RESEARCH_INCLUDE,
+    });
+
+    if (!research) {
+      throw new NotFoundException('Research not found');
+    }
+
+    return research;
+  }
+
+  async updateVisibility(userId: string, id: string, visibility: Visibility) {
+    const research = await this.prisma.research.findFirst({
+      where: { id, userId },
+      select: { id: true, shareToken: true },
+    });
+
+    if (!research) {
+      throw new NotFoundException(`Research ${id} not found`);
+    }
+
+    const shareToken =
+      visibility === 'PUBLIC'
+        ? (research.shareToken ?? generateShareToken())
+        : null;
+
+    const updated = await this.prisma.research.update({
+      where: { id },
+      data: { visibility, shareToken },
+    });
+
+    const shareBase = this.config.get<string>(
+      'SHARE_URL_BASE',
+      this.config.get<string>('CORS_ORIGIN', 'http://localhost:3000'),
+    );
+
+    return {
+      id: updated.id,
+      visibility: updated.visibility,
+      shareToken: updated.shareToken,
+      shareUrl:
+        updated.visibility === 'PUBLIC' && updated.shareToken
+          ? `${shareBase}/research/public/${updated.shareToken}`
+          : null,
+    };
+  }
+
+  async remove(userId: string, id: string) {
+    const research = await this.prisma.research.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+
+    if (!research) {
+      throw new NotFoundException(`Research ${id} not found`);
+    }
+
+    // Deleting the research cascades to its events, sources, findings, and
+    // reports via the database-level ON DELETE CASCADE relations.
+    await this.prisma.research.delete({
+      where: { id: research.id },
+    });
+
+    return { id: research.id };
+  }
+
+  async removeReport(userId: string, researchId: string, reportId: string) {
+    const research = await this.prisma.research.findFirst({
+      where: { id: researchId, userId },
+      select: { id: true },
+    });
+
+    if (!research) {
+      throw new NotFoundException(`Research ${researchId} not found`);
+    }
+
+    const result = await this.prisma.report.deleteMany({
+      where: { id: reportId, researchId },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException(`Report ${reportId} not found`);
+    }
+
+    return { id: reportId };
   }
 
   /**
@@ -134,7 +243,10 @@ export class ResearchService {
       const poll = async () => {
         try {
           const research = await this.prisma.research.findFirst({
-            where: { id, userId },
+            where: {
+              id,
+              OR: [{ userId }, { visibility: 'PUBLIC' }],
+            },
             select: { id: true, status: true },
           });
 

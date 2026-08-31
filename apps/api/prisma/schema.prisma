@@ -7,25 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modified for Better Auth — Better Auth generates the id (nanoid), email is unique.
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  name      String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id            String    @id
+  name          String?
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions  Session[]
+  accounts  Account[]
   research  Research[]
 }
 
+// Modified — add visibility and shareToken
 model Research {
-  id          String         @id @default(cuid())
+  id          String     @id @default(cuid())
   userId      String
   question    String
   instructions String?
-  status      String         @default("pending")
+  status      String     @default("pending")
   workflowId  String?
-  createdAt   DateTime       @default(now())
+  visibility  Visibility @default(PUBLIC) // NEW — public by default
+  shareToken  String?    @unique          // NEW — nanoid(21) for public links
+  createdAt   DateTime   @default(now())
   completedAt DateTime?
-  updatedAt   DateTime       @updatedAt
+  updatedAt   DateTime   @updatedAt
 
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   sources  Source[]
@@ -34,6 +44,60 @@ model Research {
   events   ResearchEvent[]
 
   @@index([userId])
+  @@index([visibility])   // NEW
+  @@index([shareToken])   // NEW
+}
+
+enum Visibility {
+  PRIVATE
+  PUBLIC
+}
+
+// New — Better Auth required tables
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  issuer                String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([issuer, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
 }
 
 model ResearchEvent {

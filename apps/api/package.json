@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "dev": "nest start --watch",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -31,6 +32,8 @@
     "@research-agent/shared": "workspace:*",
     "@scalar/nestjs-api-reference": "^1.2.16",
     "@temporalio/client": "^1.22.0",
+    "better-auth": "^1.7.2",
+    "nanoid": "^6.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^4.4.3"
