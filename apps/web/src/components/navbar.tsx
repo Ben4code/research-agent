@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Sparkles, Bot } from "lucide-react";
+import { UserNav } from "@/components/auth/user-nav";
 
 export function Navbar() {
     return (
@@ -16,13 +17,16 @@ export function Navbar() {
                             </h1>
                         </div>
                     </Link>
-                    <Link
-                        href="/research"
-                        className="flex items-center gap-2 rounded-full border border-calcite-light bg-card px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                        <Bot className="h-4 w-4" />
-                        My Research
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/research"
+                            className="flex items-center gap-2 rounded-full border border-calcite-light bg-card px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                            <Bot className="h-4 w-4" />
+                            My Research
+                        </Link>
+                        <UserNav />
+                    </div>
                 </div>
             </div>
         </nav>

@@ -1,12 +1,20 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { StatusBadge } from '@/components/status-badge';
 import { StatsTabs } from '@/components/stats-tabs';
 import { ResearchProgress } from '@/components/research-progress';
-import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
-import { Navbar } from '@/components/navbar';
+import { VisibilityToggle } from '@/components/research/visibility-toggle';
+import { ArrowLeft, Loader2, Plus } from 'lucide-react';
+import { RequireAuth } from '@/components/auth/require-auth';
+import { UserNav } from '@/components/auth/user-nav';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { useSession } from '@/lib/auth';
+import { apiFetch } from '@/lib/api';
 
 const IN_PROGRESS_STATUSES = new Set([
   'pending',
@@ -18,10 +26,13 @@ const IN_PROGRESS_STATUSES = new Set([
 
 interface ResearchDetail {
   id: string;
+  userId: string;
   question: string;
   instructions: string | null;
   status: string;
   workflowId: string | null;
+  visibility: 'PUBLIC' | 'PRIVATE';
+  shareToken: string | null;
   createdAt: string;
   completedAt: string | null;
   sources: Source[];
@@ -51,20 +62,6 @@ interface Report {
   createdAt: string;
 }
 
-async function fetchResearch(id: string): Promise<ResearchDetail | null> {
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-  try {
-    const res = await fetch(`${apiUrl}/api/research/${id}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -75,40 +72,44 @@ function formatDate(iso: string): string {
   });
 }
 
-export default async function ResearchDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const research = await fetchResearch(id);
+function ResearchDetailContent({ id }: { id: string }) {
+  const { data: session } = useSession();
+  const [research, setResearch] = useState<ResearchDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<ResearchDetail>(`/research/${id}`)
+      .then((data) => {
+        if (!cancelled) setResearch(data);
+      })
+      .catch(() => {
+        if (!cancelled) notFound();
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-calcite-orange" />
+      </div>
+    );
+  }
 
   if (!research) {
-    notFound();
+    return null;
   }
+
+  const isOwner = session?.user?.id === research.userId;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      {/* <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link
-            href="/research"
-            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            History
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
-            </Link>
-          </div>
-        </div>
-      </header> */}
-      {/* <Navbar /> */}
-
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
@@ -119,18 +120,27 @@ export default async function ResearchDetailPage({
               </span>
             </Link>
           </div>
-          <Link
-            href="/research/new"
-            className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Research
-          </Link>
+          <div className="flex items-center gap-2">
+            <UserNav />
+            <Link
+              href="/research"
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              History
+            </Link>
+            <Link
+              href="/research/new"
+              className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Research
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-10">
-        {/* Research header */}
         <div className="mb-10 flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={research.status} />
@@ -142,6 +152,16 @@ export default async function ResearchDetailPage({
                 → {formatDate(research.completedAt)}
               </span>
             )}
+            <span
+              className={cn(
+                'rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                research.visibility === 'PUBLIC'
+                  ? 'border-calcite-light text-muted-foreground'
+                  : 'border-calcite-orange/40 text-calcite-charcoal',
+              )}
+            >
+              {research.visibility === 'PUBLIC' ? 'Public' : 'Private'}
+            </span>
           </div>
           <h1 className="max-w-3xl text-balance text-3xl font-black leading-tight tracking-[-0.02em] text-foreground">
             {research.question}
@@ -151,22 +171,39 @@ export default async function ResearchDetailPage({
               {research.instructions}
             </p>
           )}
+          {isOwner && (
+            <VisibilityToggle
+              researchId={research.id}
+              visibility={research.visibility}
+              shareToken={research.shareToken}
+            />
+          )}
         </div>
 
-        {/* Live progress for in-progress research */}
         {IN_PROGRESS_STATUSES.has(research.status) && (
           <ResearchProgress researchId={research.id} />
         )}
 
-        {/* Tabbed content: Sources / Findings / Reports */}
         <StatsTabs
           status={research.status}
           researchId={research.id}
           reports={research.reports}
           findings={research.findings}
           sources={research.sources}
+          readOnly={!isOwner}
         />
       </main>
     </div>
+  );
+}
+
+export default function ResearchDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
+
+  return (
+    <RequireAuth>
+      <ResearchDetailContent id={id} />
+    </RequireAuth>
   );
 }

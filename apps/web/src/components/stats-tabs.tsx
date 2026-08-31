@@ -43,6 +43,7 @@ interface StatsTabsProps {
   reports: Report[];
   status: string;
   researchId: string;
+  readOnly?: boolean;
 }
 
 type Metric = 'findings' | 'reports' | 'sources';
@@ -69,6 +70,7 @@ export function StatsTabs({
   reports: initialReports,
   status,
   researchId,
+  readOnly = false,
 }: StatsTabsProps) {
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export function StatsTabs({
     try {
       const res = await fetch(
         `${apiUrl}/api/research/${researchId}/reports/${report.id}`,
-        { method: 'DELETE' },
+        { method: 'DELETE', credentials: 'include' },
       );
 
       if (!res.ok) {
@@ -165,6 +167,7 @@ export function StatsTabs({
             reports={reports}
             status={status}
             deletingId={deletingId}
+            readOnly={readOnly}
             onDelete={handleDeleteReport}
           />
         )}
@@ -179,11 +182,13 @@ function ReportsPanel({
   reports,
   status,
   deletingId,
+  readOnly,
   onDelete,
 }: {
   reports: Report[];
   status: string;
   deletingId: string | null;
+  readOnly: boolean;
   onDelete: (report: Report) => void;
 }) {
   if (reports.length === 0) {
@@ -217,21 +222,23 @@ function ReportsPanel({
                 Report
               </span>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Delete report "${report.title}"`}
-              disabled={deletingId === report.id}
-              onClick={() => onDelete(report)}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              {deletingId === report.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
+            {!readOnly && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Delete report "${report.title}"`}
+                disabled={deletingId === report.id}
+                onClick={() => onDelete(report)}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                {deletingId === report.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
           <article className="prose-calcite dark:prose-invert max-w-none rounded-xl border border-calcite-light bg-background p-8">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>

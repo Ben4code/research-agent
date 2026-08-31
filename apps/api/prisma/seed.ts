@@ -1,4 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import { customAlphabet } from 'nanoid';
+
+const shareToken = customAlphabet(
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+  21,
+);
 
 const prisma = new PrismaClient();
 
@@ -26,6 +32,8 @@ async function main() {
         'Focus on pricing, APIs, payment methods, and developer experience.',
       status: 'completed',
       workflowId: 'wf_payment_processors_ca',
+      visibility: 'PUBLIC',
+      shareToken: shareToken(),
       createdAt: new Date(Date.now() - day * 7),
       completedAt: new Date(Date.now() - day * 6),
     },
@@ -40,6 +48,8 @@ async function main() {
         'Focus on durability, developer experience, and pricing.',
       status: 'completed',
       workflowId: 'wf_temporal_vs_bullmq_inngest',
+      visibility: 'PUBLIC',
+      shareToken: shareToken(),
       createdAt: new Date(Date.now() - day * 4),
       completedAt: new Date(Date.now() - day * 3),
     },
@@ -52,6 +62,8 @@ async function main() {
         'React state management in 2026: Context vs Zustand vs Jotai',
       status: 'researching',
       workflowId: 'wf_react_state_2026',
+      visibility: 'PUBLIC',
+      shareToken: shareToken(),
       createdAt: new Date(Date.now() - 1000 * 60 * 30),
     },
   });
@@ -65,6 +77,8 @@ async function main() {
         'Cover AIDA, voluntary codes, and provincial frameworks.',
       status: 'failed',
       workflowId: 'wf_canadian_ai_regulations',
+      visibility: 'PUBLIC',
+      shareToken: shareToken(),
       createdAt: new Date(Date.now() - day * 2),
     },
   });

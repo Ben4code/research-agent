@@ -59,6 +59,18 @@ export class ResearchRecordDocDto {
   workflowId?: string | null;
 
   @ApiProperty({
+    description: 'Visibility of the research project',
+    enum: ['PRIVATE', 'PUBLIC'],
+  })
+  visibility!: string;
+
+  @ApiPropertyOptional({
+    description: 'Share token for public access',
+    nullable: true,
+  })
+  shareToken?: string | null;
+
+  @ApiProperty({
     description: 'Creation timestamp (ISO 8601)',
     example: '2026-08-22T13:47:45.676Z',
   })
@@ -202,6 +214,18 @@ export class ResearchDetailDocDto {
   @ApiPropertyOptional({ description: 'Temporal workflow ID', nullable: true })
   workflowId?: string | null;
 
+  @ApiProperty({
+    description: 'Visibility of the research project',
+    enum: ['PRIVATE', 'PUBLIC'],
+  })
+  visibility!: string;
+
+  @ApiPropertyOptional({
+    description: 'Share token for public access',
+    nullable: true,
+  })
+  shareToken?: string | null;
+
   @ApiProperty({ description: 'Creation timestamp (ISO 8601)' })
   createdAt!: string;
 
@@ -250,6 +274,32 @@ export class DeleteResearchResponseDocDto {
     example: 'cmt4fnrm40001zv5xags8q27q',
   })
   id!: string;
+}
+
+export class UpdateVisibilityResponseDocDto {
+  @ApiProperty({
+    description: 'Unique research identifier',
+    example: 'cmt4fnrm40001zv5xags8q27q',
+  })
+  id!: string;
+
+  @ApiProperty({
+    description: 'Updated visibility',
+    enum: ['PRIVATE', 'PUBLIC'],
+  })
+  visibility!: string;
+
+  @ApiPropertyOptional({
+    description: 'Share token (present when PUBLIC)',
+    nullable: true,
+  })
+  shareToken?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Full share URL for PUBLIC research',
+    nullable: true,
+  })
+  shareUrl?: string | null;
 }
 
 export class ValidationErrorDocDto {

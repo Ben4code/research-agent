@@ -1,10 +1,32 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
 import { TemporalService } from './../src/temporal/temporal.service';
+import { AuthGuard } from './../src/auth/auth.guard';
+
+const TEST_USER = {
+  id: 'test-user-id',
+  email: 'test@example.com',
+  name: 'Test User',
+  emailVerified: true,
+};
+
+const mockAuthGuard = {
+  canActivate: vi.fn(
+    (context: {
+      switchToHttp: () => {
+        getRequest: () => { user?: typeof TEST_USER };
+      };
+    }) => {
+      context.switchToHttp().getRequest().user = TEST_USER;
+      return true;
+    },
+  ),
+};
 
 describe('Research API (e2e)', () => {
   let app: INestApplication;
@@ -51,6 +73,8 @@ describe('Research API (e2e)', () => {
       .useValue(mockPrisma)
       .overrideProvider(TemporalService)
       .useValue(mockTemporal)
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -79,11 +103,13 @@ describe('Research API (e2e)', () => {
     it('should create research and start workflow', async () => {
       const dbResearch = {
         id: 'test-id-1',
-        userId: 'demo-user-id',
+        userId: 'test-user-id',
         question: 'Compare Temporal and BullMQ',
         instructions: 'Focus on NestJS',
         status: 'pending',
         workflowId: null,
+        visibility: 'PUBLIC',
+        shareToken: 'abc123',
         createdAt: new Date(),
         completedAt: null,
         updatedAt: new Date(),
@@ -111,10 +137,12 @@ describe('Research API (e2e)', () => {
 
       expect(mockPrisma.research.create).toHaveBeenCalledWith({
         data: {
-          userId: 'demo-user-id',
+          userId: 'test-user-id',
           question: 'Compare Temporal and BullMQ',
           instructions: 'Focus on NestJS',
           status: 'pending',
+          visibility: 'PUBLIC',
+          shareToken: expect.any(String),
         },
       });
 
@@ -133,14 +161,30 @@ describe('Research API (e2e)', () => {
       });
     });
 
+    it('should return 401 when not authenticated', async () => {
+      mockAuthGuard.canActivate.mockImplementationOnce(() => {
+        throw new UnauthorizedException('Not authenticated');
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/research')
+        .send({ question: 'Compare Temporal and BullMQ' })
+        .expect(401);
+
+      expect(response.body).toBeDefined();
+      expect(mockPrisma.research.create).not.toHaveBeenCalled();
+    });
+
     it('should create research without instructions', async () => {
       const dbResearch = {
         id: 'test-id-2',
-        userId: 'demo-user-id',
+        userId: 'test-user-id',
         question: 'Best React state management',
         instructions: null,
         status: 'pending',
         workflowId: null,
+        visibility: 'PUBLIC',
+        shareToken: 'abc456',
         createdAt: new Date(),
         completedAt: null,
         updatedAt: new Date(),
@@ -183,11 +227,13 @@ describe('Research API (e2e)', () => {
     it('should strip unknown fields', async () => {
       const dbResearch = {
         id: 'test-id-3',
-        userId: 'demo-user-id',
+        userId: 'test-user-id',
         question: 'Test question',
         instructions: null,
         status: 'pending',
         workflowId: null,
+        visibility: 'PUBLIC',
+        shareToken: 'abc789',
         createdAt: new Date(),
         completedAt: null,
         updatedAt: new Date(),
@@ -206,10 +252,12 @@ describe('Research API (e2e)', () => {
 
       expect(mockPrisma.research.create).toHaveBeenCalledWith({
         data: {
-          userId: 'demo-user-id',
+          userId: 'test-user-id',
           question: 'Test question',
           instructions: undefined,
           status: 'pending',
+          visibility: 'PUBLIC',
+          shareToken: expect.any(String),
         },
       });
     });
@@ -217,11 +265,13 @@ describe('Research API (e2e)', () => {
     it('should mark research as failed if workflow start fails', async () => {
       const dbResearch = {
         id: 'test-id-4',
-        userId: 'demo-user-id',
+        userId: 'test-user-id',
         question: 'Test question',
         instructions: null,
         status: 'pending',
         workflowId: null,
+        visibility: 'PUBLIC',
+        shareToken: 'abc012',
         createdAt: new Date(),
         completedAt: null,
         updatedAt: new Date(),
@@ -251,26 +301,30 @@ describe('Research API (e2e)', () => {
   });
 
   describe('GET /api/research', () => {
-    it('should return list of research projects', async () => {
+    it('should return list of research projects for the current user', async () => {
       const dbItems = [
         {
           id: 'r1',
-          userId: 'demo-user-id',
+          userId: 'test-user-id',
           question: 'Question 1',
           instructions: null,
           status: 'completed',
           workflowId: 'wf-1',
+          visibility: 'PUBLIC',
+          shareToken: 'tok-1',
           createdAt: new Date('2026-08-20'),
           completedAt: new Date('2026-08-21'),
           updatedAt: new Date('2026-08-21'),
         },
         {
           id: 'r2',
-          userId: 'demo-user-id',
+          userId: 'test-user-id',
           question: 'Question 2',
           instructions: 'Focus on pricing',
           status: 'researching',
           workflowId: 'wf-2',
+          visibility: 'PUBLIC',
+          shareToken: 'tok-2',
           createdAt: new Date('2026-08-22'),
           completedAt: null,
           updatedAt: new Date('2026-08-22'),
@@ -288,7 +342,13 @@ describe('Research API (e2e)', () => {
       expect(response.body.items[0].id).toBe('r1');
       expect(response.body.items[0].question).toBe('Question 1');
       expect(response.body.items[0].status).toBe('completed');
+      expect(response.body.items[0].visibility).toBe('PUBLIC');
       expect(response.body.items[1].status).toBe('researching');
+
+      expect(mockPrisma.research.findMany).toHaveBeenCalledWith({
+        where: { userId: 'test-user-id' },
+        orderBy: { createdAt: 'desc' },
+      });
     });
 
     it('should return empty list when no research exists', async () => {
@@ -307,11 +367,13 @@ describe('Research API (e2e)', () => {
     it('should return research detail with sources, findings, reports', async () => {
       const dbResearch = {
         id: 'r1',
-        userId: 'demo-user-id',
+        userId: 'test-user-id',
         question: 'Compare payment processors',
         instructions: 'Focus on Canadian SaaS',
         status: 'completed',
         workflowId: 'wf-1',
+        visibility: 'PUBLIC',
+        shareToken: 'tok-1',
         createdAt: new Date('2026-08-15'),
         completedAt: new Date('2026-08-16'),
         updatedAt: new Date('2026-08-16'),
@@ -364,6 +426,73 @@ describe('Research API (e2e)', () => {
       expect(response.body.findings).toHaveLength(1);
       expect(response.body.reports).toHaveLength(1);
       expect(response.body.findings[0].source.title).toBe('Stripe Pricing');
+
+      expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 'r1',
+          OR: [{ userId: 'test-user-id' }, { visibility: 'PUBLIC' }],
+        },
+        include: {
+          sources: { orderBy: { retrievedAt: 'desc' } },
+          findings: {
+            include: {
+              source: { select: { id: true, url: true, title: true } },
+            },
+          },
+          reports: { orderBy: { createdAt: 'desc' } },
+        },
+      });
+    });
+
+    describe('GET /api/research/public/:token', () => {
+      it('should return public research without authentication', async () => {
+        const dbResearch = {
+          id: 'r1',
+          userId: 'some-other-user',
+          question: 'Public research question',
+          instructions: null,
+          status: 'completed',
+          workflowId: 'wf-1',
+          visibility: 'PUBLIC',
+          shareToken: 'public-token-123',
+          createdAt: new Date('2026-08-15'),
+          completedAt: new Date('2026-08-16'),
+          updatedAt: new Date('2026-08-16'),
+          sources: [],
+          findings: [],
+          reports: [],
+        };
+
+        mockPrisma.research.findFirst.mockResolvedValue(dbResearch);
+
+        const response = await request(app.getHttpServer())
+          .get('/api/research/public/public-token-123')
+          .expect(200);
+
+        expect(response.body.id).toBe('r1');
+        expect(response.body.shareToken).toBe('public-token-123');
+
+        expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
+          where: { shareToken: 'public-token-123', visibility: 'PUBLIC' },
+          include: {
+            sources: { orderBy: { retrievedAt: 'desc' } },
+            findings: {
+              include: {
+                source: { select: { id: true, url: true, title: true } },
+              },
+            },
+            reports: { orderBy: { createdAt: 'desc' } },
+          },
+        });
+      });
+
+      it('should return 404 when token is invalid', async () => {
+        mockPrisma.research.findFirst.mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get('/api/research/public/nope')
+          .expect(404);
+      });
     });
 
     describe('GET /api/research/:id/events (SSE)', () => {
@@ -438,6 +567,87 @@ describe('Research API (e2e)', () => {
     });
   });
 
+  describe('POST /api/research/:id/visibility', () => {
+    it('should set visibility to PUBLIC and return share URL', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue({
+        id: 'r1',
+        shareToken: 'tok-1',
+      });
+      mockPrisma.research.update.mockResolvedValue({
+        id: 'r1',
+        visibility: 'PUBLIC',
+        shareToken: 'tok-1',
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/research/r1/visibility')
+        .send({ visibility: 'PUBLIC' })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: 'r1',
+        visibility: 'PUBLIC',
+        shareToken: 'tok-1',
+      });
+      expect(response.body.shareUrl).toContain('tok-1');
+
+      expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
+        where: { id: 'r1', userId: 'test-user-id' },
+        select: { id: true, shareToken: true },
+      });
+      expect(mockPrisma.research.update).toHaveBeenCalledWith({
+        where: { id: 'r1' },
+        data: { visibility: 'PUBLIC', shareToken: 'tok-1' },
+      });
+    });
+
+    it('should set visibility to PRIVATE and clear the share token', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue({
+        id: 'r1',
+        shareToken: 'tok-1',
+      });
+      mockPrisma.research.update.mockResolvedValue({
+        id: 'r1',
+        visibility: 'PRIVATE',
+        shareToken: null,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/research/r1/visibility')
+        .send({ visibility: 'PRIVATE' })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: 'r1',
+        visibility: 'PRIVATE',
+        shareToken: null,
+      });
+
+      expect(mockPrisma.research.update).toHaveBeenCalledWith({
+        where: { id: 'r1' },
+        data: { visibility: 'PRIVATE', shareToken: null },
+      });
+    });
+
+    it('should return 400 for invalid visibility', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/research/r1/visibility')
+        .send({ visibility: 'SECRET' })
+        .expect(400);
+
+      expect(response.body.message).toBe('Validation failed');
+    });
+
+    it('should return 404 when research not owned by user', async () => {
+      mockPrisma.research.findFirst.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .post('/api/research/nonexistent/visibility')
+        .send({ visibility: 'PUBLIC' })
+        .expect(404);
+    });
+  });
+
   describe('DELETE /api/research/:id', () => {
     it('should delete a research project', async () => {
       mockPrisma.research.findFirst.mockResolvedValue({ id: 'r1' });
@@ -450,7 +660,7 @@ describe('Research API (e2e)', () => {
       expect(response.body).toEqual({ id: 'r1' });
 
       expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
-        where: { id: 'r1', userId: 'demo-user-id' },
+        where: { id: 'r1', userId: 'test-user-id' },
         select: { id: true },
       });
       expect(mockPrisma.research.delete).toHaveBeenCalledWith({
@@ -482,7 +692,7 @@ describe('Research API (e2e)', () => {
       expect(response.body).toEqual({ id: 'rep1' });
 
       expect(mockPrisma.research.findFirst).toHaveBeenCalledWith({
-        where: { id: 'r1', userId: 'demo-user-id' },
+        where: { id: 'r1', userId: 'test-user-id' },
         select: { id: true },
       });
       expect(mockPrisma.report.deleteMany).toHaveBeenCalledWith({

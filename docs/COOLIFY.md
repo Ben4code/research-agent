@@ -75,9 +75,20 @@ For each of `api`, `worker`, `web`: New Resource → this repo → Build Pack
   | `TEMPORAL_ADDRESS`  | `temporal-<stack-uuid>:7233`                       |
   | `TEMPORAL_NAMESPACE`| `default`                                          |
   | `TEMPORAL_TASK_QUEUE`| `research-agent`                                  |
+  | `BETTER_AUTH_SECRET`| `openssl rand -base64 32`                          |
+  | `BETTER_AUTH_URL`   | `https://api.celeboty.com`                         |
+  | `ADMIN_SIGNUP_CODE` | secret code required to promote a user to admin    |
 
   Prisma migrations run automatically on container start
   (`prisma migrate deploy` in the image's `CMD`).
+
+  > `BETTER_AUTH_SECRET` is required — without it Better Auth falls back to
+  > an insecure dev secret. Generate once and keep it stable across redeploys
+  > (rotating it invalidates existing sessions).
+  >
+  > `ADMIN_SIGNUP_CODE` gates `POST /api/admin/claim`. If it is unset, admin
+  > registration is always rejected with `403 Invalid admin code`, so admins
+  > can never be created — set it before the first deploy.
 
 ### worker
 

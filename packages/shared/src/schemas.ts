@@ -13,11 +13,21 @@ export const researchStatusSchema = z.enum([
   'waiting_for_user',
 ]);
 
+export const visibilitySchema = z.enum(['PRIVATE', 'PUBLIC']);
+
 // ── Request schemas ─────────────────────────────────────────────────
 
 export const createResearchSchema = z.object({
   question: z.string().min(1, 'Question is required').max(2000),
   instructions: z.string().max(2000).optional(),
+});
+
+export const updateVisibilitySchema = z.object({
+  visibility: visibilitySchema,
+});
+
+export const claimAdminSchema = z.object({
+  code: z.string().min(1, 'Admin code is required'),
 });
 
 // ── Response schemas ────────────────────────────────────────────────
@@ -34,6 +44,8 @@ export const researchRecordSchema = z.object({
   instructions: z.string().nullable().optional(),
   status: researchStatusSchema,
   workflowId: z.string().nullable().optional(),
+  visibility: visibilitySchema,
+  shareToken: z.string().nullable().optional(),
   createdAt: z.string(),
   completedAt: z.string().nullable().optional(),
 });
@@ -46,7 +58,10 @@ export const researchListResponseSchema = z.object({
 // ── Inferred types ──────────────────────────────────────────────────
 
 export type ResearchStatus = z.infer<typeof researchStatusSchema>;
+export type Visibility = z.infer<typeof visibilitySchema>;
 export type CreateResearchRequest = z.infer<typeof createResearchSchema>;
+export type UpdateVisibilityRequest = z.infer<typeof updateVisibilitySchema>;
+export type ClaimAdminRequest = z.infer<typeof claimAdminSchema>;
 export type ResearchResponse = z.infer<typeof researchResponseSchema>;
 export type ResearchRecord = z.infer<typeof researchRecordSchema>;
 export type ResearchListResponse = z.infer<typeof researchListResponseSchema>;

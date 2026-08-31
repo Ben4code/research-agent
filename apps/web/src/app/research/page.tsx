@@ -1,35 +1,23 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { cn } from '@/lib/utils';
-import { ArrowRight, FileSearch, Plus, Sparkles } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
+import { RequireAuth } from '@/components/auth/require-auth';
+import { UserNav } from '@/components/auth/user-nav';
+import { ArrowRight, FileSearch, Plus } from 'lucide-react';
 
 interface ResearchItem {
   id: string;
   question: string;
   status: string;
+  visibility: string;
+  shareToken: string | null;
   createdAt: string;
   completedAt: string | null;
-}
-
-interface ResearchResponse {
-  items: ResearchItem[];
-  total: number;
-}
-
-async function fetchResearch(): Promise<ResearchItem[]> {
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-  try {
-    const res = await fetch(`${apiUrl}/api/research`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
-    const data: ResearchResponse = await res.json();
-    return data.items;
-  } catch {
-    return [];
-  }
 }
 
 function formatDate(iso: string): string {
@@ -40,12 +28,32 @@ function formatDate(iso: string): string {
   });
 }
 
-export default async function ResearchPage() {
-  const items = await fetchResearch();
+function ResearchList() {
+  const [items, setItems] = useState<ResearchItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<{ items: ResearchItem[]; total: number }>('/research')
+      .then((data) => {
+        if (cancelled) return;
+        setItems(data.items);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Failed to load research');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
@@ -56,29 +64,45 @@ export default async function ResearchPage() {
               </span>
             </Link>
           </div>
-          <Link
-            href="/research/new"
-            className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Research
-          </Link>
+          <div className="flex items-center gap-2">
+            <UserNav />
+            <Link
+              href="/research/new"
+              className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Research
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-10">
-        {/* Page heading */}
         <div className="mb-8">
           <h1 className="text-3xl font-black tracking-[-0.02em] text-foreground">
             My Research
           </h1>
           <p className="mt-2 max-w-[58ch] text-muted-foreground">
-            {items.length} project{items.length !== 1 ? 's' : ''} — reopen any
-            research to see its report and sources.
+            {loading
+              ? 'Loading your projects…'
+              : `${items.length} project${items.length !== 1 ? 's' : ''} — reopen any research to see its report and sources.`}
           </p>
         </div>
 
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-20 animate-pulse rounded-2xl border border-calcite-light bg-muted/40"
+              />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive">
+            {error}
+          </div>
+        ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-calcite-light py-20 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-calcite-peach/60 text-calcite-charcoal">
               <FileSearch className="h-7 w-7" />
@@ -116,6 +140,16 @@ export default async function ResearchPage() {
                     <span className="text-sm text-muted-foreground">
                       {formatDate(item.createdAt)}
                     </span>
+                    <span
+                      className={cn(
+                        'text-xs font-medium',
+                        item.visibility === 'PUBLIC'
+                          ? 'text-muted-foreground'
+                          : 'text-calcite-orange',
+                      )}
+                    >
+                      {item.visibility === 'PUBLIC' ? 'Public' : 'Private'}
+                    </span>
                   </div>
                 </div>
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-calcite-light text-muted-foreground transition-all group-hover:border-calcite-orange/50 group-hover:bg-calcite-peach/60 group-hover:text-calcite-charcoal">
@@ -127,5 +161,13 @@ export default async function ResearchPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function ResearchPage() {
+  return (
+    <RequireAuth>
+      <ResearchList />
+    </RequireAuth>
   );
 }
