@@ -87,10 +87,10 @@ export default function Home() {
         className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md"
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+          <Link href="/" className="flex items-center">
+            <img src="/assets/logo-icon.png" alt="DroidSearch" className="h-8 w-8" />
             <span className="text-lg font-black tracking-tight text-foreground">
-              Mecha<span className="text-calcite-orange">Search</span>
+              Droid<span className="text-calcite-orange">Search</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
@@ -159,7 +159,7 @@ export default function Home() {
             data-anim="hero-copy"
             className="mt-6 max-w-[62ch] text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl"
           >
-            MechaSearch turns complex questions into structured, cited
+            DroidSearch turns complex questions into structured, cited
             reports — an AI agent that plans, searches the live web, extracts
             findings, and writes it all up. Even when you close the browser.
           </p>
@@ -250,7 +250,7 @@ export default function Home() {
             Research you can trust, built to last
           </h2>
           <p className="mt-4 max-w-[58ch] text-muted-foreground">
-            Traditional chat gives you an answer. MechaSearch gives you a
+            Traditional chat gives you an answer. DroidSearch gives you a
             durable, citable investigation you can verify.
           </p>
         </div>
@@ -342,8 +342,8 @@ export default function Home() {
       <footer className="border-t border-calcite-light/20 bg-calcite-charcoal">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-calcite-light/70 sm:flex-row">
           <div className="flex items-center gap-2">
-            <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-5 w-5" />
-            MechaSearch — durable AI research
+            <img src="/assets/logo-icon.png" alt="DroidSearch" className="h-5 w-5" />
+            DroidSearch — durable AI research
           </div>
           <p>Mastra decides what to do. Temporal makes sure it gets done.</p>
         </div>

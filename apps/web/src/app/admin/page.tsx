@@ -99,10 +99,10 @@ function AdminDashboard() {
         prev.map((r) =>
           r.id === item.id
             ? {
-                ...r,
-                visibility: next,
-                shareToken: next === 'PUBLIC' ? r.shareToken ?? 'public' : null,
-              }
+              ...r,
+              visibility: next,
+              shareToken: next === 'PUBLIC' ? r.shareToken ?? 'public' : null,
+            }
             : r,
         ),
       );
@@ -138,9 +138,9 @@ function AdminDashboard() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+              <img src="/assets/logo-icon.png" alt="DroidSearch" className="h-8 w-8" />
               <span className="text-lg font-black tracking-tight text-foreground">
-                Mecha<span className="text-calcite-orange">Search</span>
+                Droid<span className="text-calcite-orange">Search</span>
               </span>
             </Link>
             <span className="hidden items-center gap-1.5 rounded-full bg-calcite-peach/60 px-3 py-1 text-xs font-semibold text-calcite-charcoal sm:flex">

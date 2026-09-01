@@ -51,7 +51,7 @@ function NewResearchForm() {
           <div className="flex items-center gap-2">
             <UserNav />
             <Link href="/" className="flex items-center gap-2">
-              <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+              <img src="/assets/logo-icon.png" alt="DroidSearch" className="h-8 w-8" />
             </Link>
           </div>
         </div>
