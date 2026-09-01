@@ -17,7 +17,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'MechaSearch',
+  title: 'DroidSearch',
   description:
     'AI-powered research platform with durable workflow execution',
 };

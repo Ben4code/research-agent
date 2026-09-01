@@ -64,9 +64,9 @@ export default async function PublicResearchPage({
       <header className="sticky top-0 z-50 border-b border-calcite-light bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/assets/logo-icon.svg" alt="MechaSearch" className="h-8 w-8" />
+            <img src="/assets/logo-icon.png" alt="DroidSearch" className="h-8 w-8" />
             <span className="text-lg font-black tracking-tight text-foreground">
-              Mecha<span className="text-calcite-orange">Search</span>
+              Droid<span className="text-calcite-orange">Search</span>
             </span>
           </Link>
           <span className="flex items-center gap-1.5 rounded-full border border-calcite-light bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground">

@@ -1,5 +1,5 @@
 # Architecting Production-Grade Durable AI Systems
-## A Comprehensive Architectural Blueprint & Case Study of MechaSearch
+## A Comprehensive Architectural Blueprint & Case Study of DroidSearch
 
 > **Target Audience:** Software Architects, AI Engineers, and Full-Stack Developers  
 > **Core Focus:** Building resilient, long-running, fault-tolerant AI agent systems using Workflow Orchestration ([Temporal.io](https://docs.temporal.io/)), Agent Frameworks ([Mastra](https://mastra.ai/docs)), Modular Backends ([NestJS](https://docs.nestjs.com/) + [Prisma](https://www.prisma.io/docs)), and Reactive Frontends ([Next.js](https://nextjs.org/docs) + [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)).
